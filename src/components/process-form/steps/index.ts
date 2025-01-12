@@ -1,0 +1,5 @@
+export { ProcessDataForm } from './process-data-form/index'
+export { PartiesForm } from './parties-form/index'
+export { DeadlinesForm } from './deadlines-form/index'
+export { RelatedProcessesForm } from './related-processes-form/index'
+export { ClientForm } from './client-form/index' 
