@@ -27,7 +27,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
         pages.push(i);
       } else if (
         (i === page - range - 1 || i === page + range + 1) && // Posição das reticências
-        !pages.includes("...")
+        pages.filter((p) => p === "...").length < 2 // Limita a 2 reticências
       ) {
         pages.push("...");
       }
