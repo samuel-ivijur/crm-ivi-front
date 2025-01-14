@@ -7,19 +7,9 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/column-header"
 import { Eye, MessageSquare, Bell, Trash } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
+import { GetLitigations } from "@/services/api/litigations"
 
-export type Process = {
-  id: string
-  numero: string
-  instancia: string
-  cliente: string
-  dataCadastro: string
-  status: string
-  comunicacao: string
-  monitoramento: string
-}
-
-export const columns: ColumnDef<Process>[] = [
+export const columns: ColumnDef<GetLitigations.LitigationInfo>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -40,36 +30,36 @@ export const columns: ColumnDef<Process>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "numero",
+    accessorKey: "processnumber",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Número do Processo" />
     ),
   },
   {
-    accessorKey: "instancia",
+    accessorKey: "instance",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Instância" />
     ),
   },
   {
-    accessorKey: "cliente",
+    accessorKey: "clientname",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Cliente" />
     ),
   },
   {
-    accessorKey: "dataCadastro",
+    accessorKey: "createdat",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Data Cadastro" />
     ),
   },
   {
-    accessorKey: "status",
+    accessorKey: "statusdescription",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const status = row.getValue("status") as string
+      const status = row.getValue("statusdescription") as string
       return (
         <Badge
           variant={status === "Ativo" ? "success" : "destructive"}
@@ -80,12 +70,12 @@ export const columns: ColumnDef<Process>[] = [
     },
   },
   {
-    accessorKey: "comunicacao",
+    accessorKey: "communication",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Comunicação" />
     ),
     cell: ({ row }) => {
-      const status = row.getValue("comunicacao") as string
+      const status = row.getValue("statusdescription") as string
       return (
         <Badge
           variant={status === "Ativa" ? "success" : "destructive"}
@@ -96,12 +86,12 @@ export const columns: ColumnDef<Process>[] = [
     },
   },
   {
-    accessorKey: "monitoramento",
+    id: "monitoring",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Monitoramento" />
     ),
     cell: ({ row }) => {
-      const status = row.getValue("monitoramento") as string
+      const status = row.getValue("statusdescription") as string
       return (
         <Badge
           variant={status === "Ativo" ? "success" : "destructive"}
@@ -116,14 +106,14 @@ export const columns: ColumnDef<Process>[] = [
     header: () => <div className="text-center">Ações</div>,
     cell: ({ row }) => {
       const router = useRouter()
-      const process = row.original
+      const idLitigation = row.id
 
       return (
         <div className="flex justify-center gap-2">
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => router.push(`/processos/${process.id}`)}
+            onClick={() => router.push(`/processos/${idLitigation}`)}
           >
             <Eye className="h-4 w-4" />
           </Button>

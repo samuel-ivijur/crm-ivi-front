@@ -11,13 +11,25 @@ export const loginSchema = z.object({
 
 export type LoginFormValues = z.infer<typeof loginSchema>
 
-export interface User {
+export type Permission = {
+  id: number
+  value: string
+}
+
+export type Organization = {
+  id: string
+  name: string
+}
+
+export type User = {
   id: string
   name: string
   email: string
+  permissions: Permission
+  organizations: Organization[]
 }
 
-export interface AuthState {
+export type AuthState = {
   user: User | null
   loading: boolean
 } 

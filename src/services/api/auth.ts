@@ -1,17 +1,6 @@
 import { API_URL } from '@/config/api'
+import { User } from '@/types/auth'
 import { authCookies } from '@/utils/auth-cookies'
-
-interface LoginResponse {
-  data: {
-    token: string
-    user: {
-      id: string
-      name: string
-      email: string
-    }
-  }
-  message?: string
-}
 
 export const authService = {
   login: async (email: string, password: string) => {
@@ -29,8 +18,9 @@ export const authService = {
       throw new Error(data.message || 'Erro ao fazer login')
     }
 
-    // Armazenar dados nos cookies do servidor
-    authCookies.setAuthData(data.data.token, data.data.user)
+    const { token } = data.data
+    const user = { ...data.data, token: undefined }
+    authCookies.setAuthData({ token, user })
 
     return data
   },
@@ -39,8 +29,10 @@ export const authService = {
     authCookies.clearAuthData()
   },
 
-  getCurrentUser: async () => {
-    const { user, token } = authCookies.getAuthData()
-    return { user, token }
-  }
+  getCurrentUser: () => authCookies.getAuthData()
 } 
+
+interface LoginResponse {
+  data: User & { token: string }
+  message?: string
+}
