@@ -1,17 +1,34 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/utils/cn"
 import { Button } from "@/components/ui/button"
-import { Home, Files, HeadphonesIcon } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Importação dinâmica dos ícones
+const Home = dynamic(() => import('lucide-react').then(mod => mod.Home))
+const Files = dynamic(() => import('lucide-react').then(mod => mod.Files))
+const HeadphonesIcon = dynamic(() => import('lucide-react').then(mod => mod.Headphones))
 
 export function Sidebar() {
   const [mounted, setMounted] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true)
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false)
+  }, [])
+
+  const isActive = useCallback((path: string) => {
+    return pathname.startsWith(path)
+  }, [pathname])
 
   useEffect(() => {
     setMounted(true)
@@ -25,8 +42,6 @@ export function Sidebar() {
     return <div className="w-16 border-r" />
   }
 
-  const isActive = (path: string) => pathname.startsWith(path)
-
   return (
     <div
       className={cn(
@@ -34,8 +49,8 @@ export function Sidebar() {
         isHovered ? "w-64" : "w-16",
         "border-r"
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="flex flex-col h-full">
         <div className="p-4">
@@ -45,7 +60,10 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 space-y-2 p-2">
-          <Link href="/dashboard">
+          <Link 
+            href="/dashboard" 
+            prefetch={true}
+          >
             <Button
               variant="ghost"
               className={cn(
@@ -59,7 +77,7 @@ export function Sidebar() {
             </Button>
           </Link>
           
-          <Link href="/processos">
+          <Link href="/processos" prefetch={true}>
             <Button
               variant="ghost"
               className={cn(
@@ -73,7 +91,7 @@ export function Sidebar() {
             </Button>
           </Link>
 
-          <Link href="/atendimentos">
+          <Link href="/atendimentos" prefetch={true}>
             <Button
               variant="ghost"
               className={cn(
