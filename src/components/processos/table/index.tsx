@@ -19,25 +19,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
-import { columns } from "./columns"
-import { DataTableToolbar } from "./data-table-toolbar"
-import { GetLitigations, litigationsService } from "@/services/api/litigations"
+import { useState } from "react"
+import { litigationTableColumns } from "./columns"
+import { LitigationDataTableToolbar } from "./data-table-toolbar"
+import { GetLitigations } from "@/services/api/litigations"
 import { useLitigation } from "@/hooks/useLitigations"
-import { useAuth } from "@/hooks/useAuth"
+import Pagination from "@/components/pagination"
 
-export function ProcessTable() {
+export function LitigationTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const { getAllLitigationsQuery, invalidateQuery } = useLitigation()
+  const { getAllLitigationsQuery, invalidateQuery, filter, setFilter } = useLitigation()
 
   const table = useReactTable<GetLitigations.LitigationInfo>({
     // data: Array.isArray(getAllLitigationsQuery.data) ? getAllLitigationsQuery.data : [],
-    data: getAllLitigationsQuery.data || [],
-    columns,
+    data: getAllLitigationsQuery.data?.data || [],
+    columns: litigationTableColumns,
+    manualPagination: true,
+    onPaginationChange: (updater) => {
+      const newState = typeof updater === 'function' ? updater({ pageIndex: filter.page, pageSize: filter.limit }) : updater;
+      setFilter({ ...filter, page: newState.pageIndex, limit: newState.pageSize });
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -51,12 +55,27 @@ export function ProcessTable() {
       columnFilters,
       columnVisibility,
       rowSelection,
-    },
+      pagination: {
+        pageIndex: filter.page,
+        pageSize: filter.limit,
+      },
+    }
   })
+
+  const PagePagination = () => (
+    <Pagination
+      limit={filter.limit}
+      page={filter.page}
+      setLimit={(limit) => setFilter({ ...filter, limit })}
+      setPage={(page) => setFilter({ ...filter, page })}
+      total={getAllLitigationsQuery.data?.total || 0}
+    />
+  )
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      <LitigationDataTableToolbar table={table} />
+      <PagePagination />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -77,7 +96,7 @@ export function ProcessTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody loading={getAllLitigationsQuery.isLoading}>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -94,7 +113,7 @@ export function ProcessTable() {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={litigationTableColumns.length}
                   className="h-24 text-center"
                 >
                   Nenhum resultado encontrado.
@@ -106,27 +125,10 @@ export function ProcessTable() {
       </div>
       <div className="flex items-center justify-end space-x-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} linha(s) selecionada(s).
+          {table.getFilteredSelectedRowModel().rows.length} selecionado(s) | Total: {getAllLitigationsQuery.data?.total}
         </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Próxima
-          </Button>
-        </div>
+        <PagePagination />
+
       </div>
     </div>
   )

@@ -8,8 +8,9 @@ import { Eye, MessageSquare, Bell, Trash } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { GetLitigations } from "@/services/api/litigations"
+import dayjs from "dayjs"
 
-export const columns: ColumnDef<GetLitigations.LitigationInfo>[] = [
+export const litigationTableColumns: ColumnDef<GetLitigations.LitigationInfo>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -52,6 +53,14 @@ export const columns: ColumnDef<GetLitigations.LitigationInfo>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Data Cadastro" />
     ),
+    cell: ({ row }) => {
+      const createdAt = row.getValue("createdat") ? dayjs(row.getValue("createdat")).format("DD/MM/YYYY HH:ss") : ""
+      return (
+        <>
+          {createdAt}
+        </>
+      )
+    },
   },
   {
     accessorKey: "statusdescription",

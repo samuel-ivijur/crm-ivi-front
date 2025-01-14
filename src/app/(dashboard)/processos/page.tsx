@@ -1,4 +1,4 @@
-import { ProcessTable } from "@/components/processos/table"
+import { LitigationTable } from "@/components/processos/table"
 import { AddProcessButton } from "@/components/processos/add-process-button"
 import { ProcessStats } from "@/components/processos/stats"
 
@@ -12,7 +12,7 @@ export default function ProcessosPage() {
       
       <ProcessStats />
       
-      <ProcessTable />
+      <LitigationTable />
     </div>
   )
 } 

@@ -1,11 +1,12 @@
 import { HTMLAttributes } from 'react'
 import { cn } from "@/utils/cn"
+import { Spinner } from '../spinner'
 
-interface TableProps extends HTMLAttributes<HTMLTableElement> {}
-interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {}
-interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> {}
-interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {}
-interface TableHeadProps extends HTMLAttributes<HTMLTableCellElement> {}
+interface TableProps extends HTMLAttributes<HTMLTableElement> { }
+interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> { }
+interface TableBodyProps extends HTMLAttributes<HTMLTableSectionElement> { }
+interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> { }
+interface TableHeadProps extends HTMLAttributes<HTMLTableCellElement> { }
 interface TableCellProps extends HTMLAttributes<HTMLTableCellElement> {
   colSpan?: number
 }
@@ -18,7 +19,20 @@ export function TableHeader({ className, ...props }: TableHeaderProps) {
   return <thead className={cn("[&_tr]:border-b", className)} {...props} />
 }
 
-export function TableBody({ className, ...props }: TableBodyProps) {
+export function TableBody({ className, loading, ...props }: TableBodyProps & { loading?: boolean }) {
+  if (loading) {
+    return (
+      <tbody>
+        <tr>
+          <td colSpan={100} className="text-center">
+            <div className="flex justify-center">
+              <Spinner />
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    )
+  }
   return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props} />
 }
 
