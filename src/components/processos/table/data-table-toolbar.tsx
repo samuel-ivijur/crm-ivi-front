@@ -12,29 +12,29 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import * as XLSX from 'xlsx'
-import { Process } from "./columns"
+import { GetLitigations } from "@/services/api/litigations"
 
-interface DataTableToolbarProps<TData> {
-  table: Table<TData>
+interface DataTableToolbarProps {
+  table: Table<GetLitigations.LitigationInfo>
 }
 
-export function DataTableToolbar<TData>({
+export function DataTableToolbar({
   table,
-}: DataTableToolbarProps<TData>) {
+}: DataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0
   const selectedRows = table.getSelectedRowModel().rows
 
   const handleExport = () => {
     const selectedData = selectedRows.map(row => {
-      const rowData = row.original as Process
+      const rowData = row.original as GetLitigations.LitigationInfo
       return {
-        'Número do Processo': rowData.numero,
-        'Instância': rowData.instancia,
-        'Cliente': rowData.cliente,
-        'Data Cadastro': rowData.dataCadastro,
-        'Status': rowData.status,
-        'Comunicação': rowData.comunicacao,
-        'Monitoramento': rowData.monitoramento,
+        'Número do Processo': rowData.processnumber,
+        'Instância': rowData.instance,
+        'Cliente': rowData.clientname,
+        'Data Cadastro': rowData.createdat,
+        'Status': rowData.statusdescription,
+        'Comunicação': rowData.statusdescription,
+        'Monitoramento': rowData.statusdescription,
       }
     })
 
@@ -65,9 +65,9 @@ export function DataTableToolbar<TData>({
                 <Label>Número do Processo</Label>
                 <Input
                   placeholder="Digite o número..."
-                  value={(table.getColumn("numero")?.getFilterValue() as string) ?? ""}
+                  value={(table.getColumn("processnumber")?.getFilterValue() as string) ?? ""}
                   onChange={(event) =>
-                    table.getColumn("numero")?.setFilterValue(event.target.value)
+                    table.getColumn("processnumber")?.setFilterValue(event.target.value)
                   }
                 />
               </div>
@@ -75,18 +75,18 @@ export function DataTableToolbar<TData>({
                 <Label>Cliente</Label>
                 <Input
                   placeholder="Nome do cliente..."
-                  value={(table.getColumn("cliente")?.getFilterValue() as string) ?? ""}
+                  value={(table.getColumn("clientname")?.getFilterValue() as string) ?? ""}
                   onChange={(event) =>
-                    table.getColumn("cliente")?.setFilterValue(event.target.value)
+                    table.getColumn("clientname")?.setFilterValue(event.target.value)
                   }
                 />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={(table.getColumn("status")?.getFilterValue() as string) ?? "todos"}
+                  value={(table.getColumn("statusdescription")?.getFilterValue() as string) ?? "todos"}
                   onValueChange={(value) =>
-                    table.getColumn("status")?.setFilterValue(value === "todos" ? "" : value)
+                    table.getColumn("statusdescription")?.setFilterValue(value === "todos" ? "" : value)
                   }
                 >
                   <SelectTrigger>
@@ -102,9 +102,9 @@ export function DataTableToolbar<TData>({
               <div className="space-y-2">
                 <Label>Comunicação</Label>
                 <Select
-                  value={(table.getColumn("comunicacao")?.getFilterValue() as string) ?? "todos"}
+                  value={(table.getColumn("communication")?.getFilterValue() as string) ?? "todos"}
                   onValueChange={(value) =>
-                    table.getColumn("comunicacao")?.setFilterValue(value === "todos" ? "" : value)
+                    table.getColumn("communication")?.setFilterValue(value === "todos" ? "" : value)
                   }
                 >
                   <SelectTrigger>
@@ -120,9 +120,9 @@ export function DataTableToolbar<TData>({
               <div className="space-y-2">
                 <Label>Monitoramento</Label>
                 <Select
-                  value={(table.getColumn("monitoramento")?.getFilterValue() as string) ?? "todos"}
+                  value={(table.getColumn("monitoring")?.getFilterValue() as string) ?? "todos"}
                   onValueChange={(value) =>
-                    table.getColumn("monitoramento")?.setFilterValue(value === "todos" ? "" : value)
+                    table.getColumn("monitoring")?.setFilterValue(value === "todos" ? "" : value)
                   }
                 >
                   <SelectTrigger>

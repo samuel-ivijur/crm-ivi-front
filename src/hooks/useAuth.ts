@@ -27,7 +27,7 @@ export function useAuth() {
     try {
       setLoading(true)
       const response = await authService.login(email, password)
-      setUser(response.data.user)
+      setUser(response.data)
       router.push('/dashboard')
     } catch (error) {
       if (error instanceof Error) {
@@ -45,10 +45,19 @@ export function useAuth() {
     router.push('/login')
   }
 
+  const getSelectedOrganization = (): string => {
+    const { selectedOrganization } = authService.getCurrentUser()
+    if (!selectedOrganization) {
+      throw new Error('Organization not selected')
+    }
+    return selectedOrganization
+  }
+
   return {
     user,
     loading,
     login,
     logout,
+    getSelectedOrganization
   }
 } 

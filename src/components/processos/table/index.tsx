@@ -20,32 +20,23 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { Process, columns } from "./columns"
+import { useEffect, useState } from "react"
+import { columns } from "./columns"
 import { DataTableToolbar } from "./data-table-toolbar"
-
-const data = [
-  {
-    id: "1",
-    numero: "12345-01",
-    instancia: "1",
-    cliente: "John Doe",
-    dataCadastro: "30/11/2024",
-    status: "Ativo",
-    comunicacao: "Inativa",
-    monitoramento: "Ativo",
-  },
-  // Adicione mais dados aqui
-]
+import { GetLitigations, litigationsService } from "@/services/api/litigations"
+import { useLitigation } from "@/hooks/useLitigations"
+import { useAuth } from "@/hooks/useAuth"
 
 export function ProcessTable() {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+  const { getAllLitigationsQuery, invalidateQuery } = useLitigation()
 
-  const table = useReactTable<Process>({
-    data,
+  const table = useReactTable<GetLitigations.LitigationInfo>({
+    // data: Array.isArray(getAllLitigationsQuery.data) ? getAllLitigationsQuery.data : [],
+    data: getAllLitigationsQuery.data || [],
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -77,9 +68,9 @@ export function ProcessTable() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
