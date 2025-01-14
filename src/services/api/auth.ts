@@ -1,3 +1,4 @@
+import { API_URL } from '@/config/api'
 import { authCookies } from '@/utils/auth-cookies'
 
 interface LoginResponse {
@@ -14,7 +15,7 @@ interface LoginResponse {
 
 export const authService = {
   login: async (email: string, password: string) => {
-    const response = await fetch('https://dash.ivijur.com.br/api/v1/auth/login', {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
