@@ -1,11 +1,12 @@
 import '../styles/globals.css'
 import { Inter } from 'next/font/google'
+import ReactQueryProvider from '@/utils/react-query'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Nome do seu App',
-  description: 'Descrição do seu App',
+  title: 'IVijur CRM',
+  description: 'CRM IVijur',
 }
 
 export default function RootLayout({
@@ -15,7 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
+      <ReactQueryProvider>
+        <body className={inter.className}>{children}</body>
+      </ReactQueryProvider>
     </html>
   )
 } 
