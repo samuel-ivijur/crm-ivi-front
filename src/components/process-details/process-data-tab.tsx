@@ -13,10 +13,14 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "../ui"
+import { Pencil, Save, X } from "lucide-react"
+import ModalConfirm from "../modal-confirm"
 
 export function ProcessDataTab() {
-  const [isActive, setIsActive] = useState(true)
+  const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
+    isActive: true,
     cnj: "40028922123456",
     alternative: "12332140029822",
     instance: "2",
@@ -41,19 +45,33 @@ export function ProcessDataTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dados do Processo</CardTitle>
+        <CardTitle className="flex justify-between items-around">
+          Dados do Processo
+          {
+            !isEditing && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+                disabled={isEditing}
+              >
+                <Pencil size={16} />
+              </Button>
+            )
+          }
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2">
             <Label>Status Processo</Label>
             <div className="flex items-center gap-2">
-              <Switch 
-                checked={isActive}
-                onCheckedChange={setIsActive}
+              <Switch
+                checked={formData.isActive}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                 className="data-[state=checked]:bg-[#0146cf]"
               />
-              <span className="text-sm font-medium">{isActive ? 'Ativo' : 'Arquivado'}</span>
+              <span className="text-sm font-medium">{formData.isActive ? 'Ativo' : 'Arquivado'}</span>
             </div>
           </div>
 
@@ -164,6 +182,15 @@ export function ProcessDataTab() {
             </Select>
           </div>
         </div>
+        {
+          isEditing && (
+            <div className="flex justify-end gap-2">
+              <ModalConfirm />
+              <Button variant="outline"> <X size={16} className="mr-2" /> Cancelar edição</Button>
+              <Button variant="default"> <Save size={16} className="mr-2" /> Salvar</Button>
+            </div>
+          )
+        }
       </CardContent>
     </Card>
   )
