@@ -8,10 +8,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', isLoading, children, ...props }, ref) => {
+  ({ className, disabled,variant = 'default', size = 'default', isLoading, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
+        style={disabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
         className={cn(
           'inline-flex items-center justify-center rounded-md font-medium transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
