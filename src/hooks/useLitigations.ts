@@ -1,25 +1,43 @@
 "use client"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/cache";
-import { litigationsService } from "@/services/api/litigations";
+import { GetLitigations, litigationsService } from "@/services/api/litigations";
 import { useAuth } from "./useAuth";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import { useSearchParamsPersist } from "./useSearchParamsPersist";
+
+type GetLitigationParams = Omit<GetLitigations.Params, "idOrganization">;
+const INITIAL_PARAMS: GetLitigationParams = {
+    limit: 20,
+    page: 1,
+};
 
 export function useLitigation() {
     const { getSelectedOrganization } = useAuth();
     const queryclient = useQueryClient();
-    const [filter, setFilter] = useState({
-        limit: 20,
-        page: 1,
-    });
+    const { paramsPersisted, setSearchParamsPersist, resetParams } =
+        useSearchParamsPersist<GetLitigationParams>({
+            prefix: 'ltable',
+            initialParams: INITIAL_PARAMS,
+        });
 
+    const changeFilter = (params: Partial<GetLitigationParams>): void => {
+        const isFilterChanged = Object.keys(params).some(
+            (key) => key !== 'page' && paramsPersisted[key as keyof typeof paramsPersisted] !== undefined,
+        );
+
+        if (isFilterChanged) {
+            params.page = 1;
+        }
+
+        setSearchParamsPersist(params)
+    }
     const getAllLitigationsQuery = useQuery({
-        queryKey: [QUERY_KEYS.LITIGATIONS_LIST, filter],
+        queryKey: [QUERY_KEYS.LITIGATIONS_LIST, { idOrganization: getSelectedOrganization(), ...paramsPersisted }],
         queryFn: async () => {
             const data = await litigationsService.getLitigations({
                 idOrganization: getSelectedOrganization(),
-                limit: filter.limit,
-                page: filter.page,
+                ...paramsPersisted
             });
             return data;
         },
@@ -33,7 +51,7 @@ export function useLitigation() {
 
     return {
         getAllLitigationsQuery,
-        invalidateQuery,
-        filter, setFilter
+        invalidateQuery, resetParams,
+        filter: paramsPersisted, changeFilter
     }
 } 

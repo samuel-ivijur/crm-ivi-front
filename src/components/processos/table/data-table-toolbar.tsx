@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import * as XLSX from 'xlsx'
 import { GetLitigations } from "@/services/api/litigations"
 import { useLitigation } from "@/hooks/useLitigations"
+import { ValueOf } from "next/dist/shared/lib/constants"
+import { LitigationStatus, LitigationStatusLabels } from "@/constants/litigation"
 
 interface LitigationDataTableToolbarProps {
   table: Table<GetLitigations.LitigationInfo>
@@ -23,7 +25,18 @@ export function LitigationDataTableToolbar({
 }: LitigationDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0
   const selectedRows = table.getSelectedRowModel().rows
-const { getAllLitigationsQuery } = useLitigation()
+  const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
+  const debounceTime = 500
+
+  let debounceTimeout: NodeJS.Timeout | null = null
+
+
+  const debounceFilter = (key: keyof typeof filter, value: any): void => {
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout)
+    }
+    // debounceTimeout = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
+  }
 
   const handleExport = () => {
     const selectedData = selectedRows.map(row => {
@@ -43,6 +56,11 @@ const { getAllLitigationsQuery } = useLitigation()
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Processos")
     XLSX.writeFile(wb, "processos.xlsx")
+  }
+
+  const handleSelectChange = (key: keyof typeof filter, value: ValueOf<typeof LitigationStatus> | string | null) => {
+    if (value === "null") value = null
+    changeFilter({ [key]: value })
   }
 
   return (
@@ -66,47 +84,38 @@ const { getAllLitigationsQuery } = useLitigation()
                 <Label>Número do Processo</Label>
                 <Input
                   placeholder="Digite o número..."
-                  value={(table.getColumn("processnumber")?.getFilterValue() as string) ?? ""}
-                  onChange={(event) =>
-                    table.getColumn("processnumber")?.setFilterValue(event.target.value)
-                  }
+                  value={filter?.litigation ?? ""}
+                  onChange={(event) => debounceFilter("litigation", event.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Cliente</Label>
                 <Input
                   placeholder="Nome do cliente..."
-                  value={(table.getColumn("clientname")?.getFilterValue() as string) ?? ""}
-                  onChange={(event) =>
-                    table.getColumn("clientname")?.setFilterValue(event.target.value)
-                  }
+                  value={filter?.beneficiary ?? ""}
+                  onChange={(event) => debounceFilter("beneficiary", event.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={(table.getColumn("statusdescription")?.getFilterValue() as string) ?? "todos"}
-                  onValueChange={(value) =>
-                    table.getColumn("statusdescription")?.setFilterValue(value === "todos" ? "" : value)
-                  }
+                  value={filter.idStatusLitigation?.toString() ?? "null"}
+                  onValueChange={(value) => handleSelectChange("idStatusLitigation", value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value={String(null)}>Todos</SelectItem>
+                    <SelectItem value={LitigationStatus.ACTIVE.toString()}>{LitigationStatusLabels[LitigationStatus.ACTIVE]}</SelectItem>
+                    <SelectItem value={LitigationStatus.ARCHIVED.toString()}>{LitigationStatusLabels[LitigationStatus.ARCHIVED]}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Comunicação</Label>
                 <Select
-                  value={(table.getColumn("communication")?.getFilterValue() as string) ?? "todos"}
-                  onValueChange={(value) =>
-                    table.getColumn("communication")?.setFilterValue(value === "todos" ? "" : value)
-                  }
+
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
@@ -121,10 +130,7 @@ const { getAllLitigationsQuery } = useLitigation()
               <div className="space-y-2">
                 <Label>Monitoramento</Label>
                 <Select
-                  value={(table.getColumn("monitoring")?.getFilterValue() as string) ?? "todos"}
-                  onValueChange={(value) =>
-                    table.getColumn("monitoring")?.setFilterValue(value === "todos" ? "" : value)
-                  }
+
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
@@ -149,7 +155,7 @@ const { getAllLitigationsQuery } = useLitigation()
             </div>
           </PopoverContent>
         </Popover>
-        
+
         {selectedRows.length > 0 && (
           <Button
             variant="outline"

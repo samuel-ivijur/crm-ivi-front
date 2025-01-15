@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { litigationTableColumns } from "./columns"
 import { LitigationDataTableToolbar } from "./data-table-toolbar"
 import { GetLitigations } from "@/services/api/litigations"
@@ -31,16 +31,15 @@ export function LitigationTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const { getAllLitigationsQuery, invalidateQuery, filter, setFilter } = useLitigation()
+  const { getAllLitigationsQuery, filter, changeFilter, invalidateQuery } = useLitigation()
 
   const table = useReactTable<GetLitigations.LitigationInfo>({
-    // data: Array.isArray(getAllLitigationsQuery.data) ? getAllLitigationsQuery.data : [],
     data: getAllLitigationsQuery.data?.data || [],
     columns: litigationTableColumns,
     manualPagination: true,
     onPaginationChange: (updater) => {
       const newState = typeof updater === 'function' ? updater({ pageIndex: filter.page, pageSize: filter.limit }) : updater;
-      setFilter({ ...filter, page: newState.pageIndex, limit: newState.pageSize });
+      // changeFilter({ page: newState.pageIndex, limit: newState.pageSize });
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -66,8 +65,8 @@ export function LitigationTable() {
     <Pagination
       limit={filter.limit}
       page={filter.page}
-      setLimit={(limit) => setFilter({ ...filter, limit })}
-      setPage={(page) => setFilter({ ...filter, page })}
+      setLimit={(limit) => changeFilter({ limit })}
+      setPage={(page) => changeFilter({ page })}
       total={getAllLitigationsQuery.data?.total || 0}
     />
   )

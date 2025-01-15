@@ -17,7 +17,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
   // Função para gerar a lista de páginas com reticências
   const generatePageNumbers = () => {
     const pages: Array<string | number> = [];
-
+    page = +page
     for (let i = 1; i <= pageCount; i++) {
       if (
         i === 1 || // Primeira página
@@ -31,6 +31,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
       ) {
         pages.push("...");
       }
+     
     }
 
     return pages;

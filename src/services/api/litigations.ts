@@ -31,16 +31,17 @@ export namespace GetLitigations {
     startDate?: string
     endDate?: string
     nick?: string
-    litigation?: number
-    instance?: number
+    litigation?: string
+    instance?: string
     court?: string
     uf?: number
     adverseParty?: string
-    idAdverseParty?: number
-    idQualification?: number
     qualification?: string
     beneficiary?: string
-    idBeneficiary?: string
+    idAdverseParty?: number[]
+    idQualification?: number[]
+    idStatusLitigation?: number[]
+    idBeneficiary?: string[]
   }
   export type Result = {
     data: {
