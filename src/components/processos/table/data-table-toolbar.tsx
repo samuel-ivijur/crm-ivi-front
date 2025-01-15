@@ -1,5 +1,4 @@
 "use client"
-
 import { Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,16 +12,18 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import * as XLSX from 'xlsx'
 import { GetLitigations } from "@/services/api/litigations"
+import { useLitigation } from "@/hooks/useLitigations"
 
-interface DataTableToolbarProps {
+interface LitigationDataTableToolbarProps {
   table: Table<GetLitigations.LitigationInfo>
 }
 
-export function DataTableToolbar({
+export function LitigationDataTableToolbar({
   table,
-}: DataTableToolbarProps) {
+}: LitigationDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0
   const selectedRows = table.getSelectedRowModel().rows
+const { getAllLitigationsQuery } = useLitigation()
 
   const handleExport = () => {
     const selectedData = selectedRows.map(row => {
@@ -163,7 +164,7 @@ export function DataTableToolbar({
       </div>
 
       <div className="text-sm text-muted-foreground">
-        {selectedRows.length} de {table.getFilteredRowModel().rows.length} selecionado(s)
+        {selectedRows.length} selecionado(s) | Total: {getAllLitigationsQuery.data?.total}
       </div>
     </div>
   )
