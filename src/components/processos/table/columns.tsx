@@ -115,8 +115,7 @@ export const litigationTableColumns: ColumnDef<GetLitigations.LitigationInfo>[] 
     header: () => <div className="text-center">Ações</div>,
     cell: ({ row }) => {
       const router = useRouter()
-      const idLitigation = row.id
-
+      const idLitigation = row.original.id
       return (
         <div className="flex justify-center gap-2">
           <Button 
