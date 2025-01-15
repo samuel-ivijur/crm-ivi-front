@@ -29,13 +29,11 @@ export function LitigationDataTableToolbar({
   const debounceTime = 500
 
   let debounceTimeout: NodeJS.Timeout | null = null
-
-
-  const debounceFilter = (key: keyof typeof filter, value: any): void => {
+  const debounceFilter = async (key: keyof typeof filter, value: any): Promise<void> => {
     if (debounceTimeout) {
       clearTimeout(debounceTimeout)
     }
-    // debounceTimeout = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
+    debounceTimeout = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
   }
 
   const handleExport = () => {
