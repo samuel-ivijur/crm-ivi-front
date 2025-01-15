@@ -1,17 +1,24 @@
 "use client";
+
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { useState } from "react";
+import dayjs from 'dayjs'
+import 'dayjs/locale/pt-br'
 
-const ReactQueryProvider = ({ children }: { children: React.ReactNode }) => {
-  const [queryClient] = useState(() => new QueryClient());
+dayjs.locale('pt-br')
+
+export default function ReactQueryProvider({ 
+  children 
+}: { 
+  children: React.ReactNode 
+}) {
+  const [queryClient] = useState(() => new QueryClient())
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={false} />
       {children}
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  );
-};
-
-export default ReactQueryProvider;
+  )
+}

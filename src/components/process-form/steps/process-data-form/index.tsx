@@ -15,8 +15,8 @@ import {
 
 export function ProcessDataForm() {
   const { formData, updateFormData } = useProcessForm()
-  const [isChecked, setIsChecked] = useState(formData.processData.status)
-  const [value, setValue] = useState(formData.processData.value)
+  const [isChecked, setIsChecked] = useState(true)
+  const [value, setValue] = useState('')
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, '')
@@ -55,9 +55,9 @@ export function ProcessDataForm() {
               defaultChecked 
               className="data-[state=checked]:bg-[#0146cf]"
               checked={isChecked}
-              onCheckedChange={handleStatusChange}
+              onCheckedChange={setIsChecked}
             />
-            <span className="text-sm">{isChecked ? 'Ativo' : 'Arquivado'}</span>
+            <span className="text-sm">{isChecked ? 'Ativo' : 'Baixado'}</span>
           </div>
         </div>
 

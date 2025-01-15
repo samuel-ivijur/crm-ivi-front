@@ -15,7 +15,7 @@ export function AddProcessButton() {
         className="bg-[#0146cf] hover:bg-[#0146cf]/90"
       >
         <Plus className="mr-2 h-4 w-4" />
-        Adicionar um processo
+        Cadastrar um processo
       </Button>
 
       <ProcessFormModal 
