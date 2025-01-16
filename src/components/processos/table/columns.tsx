@@ -9,6 +9,15 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
 import { GetLitigations } from "@/services/api/litigations"
 import dayjs from "dayjs"
+import PopConfirm from "@/components/popconfirm"
+
+const deleteLitigation = async (id: string) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(true)
+    }, 1000)
+  })
+}
 
 export const litigationTableColumns: ColumnDef<GetLitigations.LitigationInfo>[] = [
   {
@@ -118,8 +127,8 @@ export const litigationTableColumns: ColumnDef<GetLitigations.LitigationInfo>[] 
       const idLitigation = row.original.id
       return (
         <div className="flex justify-center gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => router.push(`/processos/${idLitigation}`)}
           >
@@ -131,9 +140,11 @@ export const litigationTableColumns: ColumnDef<GetLitigations.LitigationInfo>[] 
           <Button variant="ghost" size="icon">
             <Bell className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-red-500">
-            <Trash className="h-4 w-4" />
-          </Button>
+          <PopConfirm title="Deseja realmente excluir o processo?" description="Essa ação é irreversível" onConfirm={() => deleteLitigation(idLitigation)}>
+            <Button variant="ghost" size="icon" className="text-red-500">
+              <Trash className="h-4 w-4" />
+            </Button>
+          </PopConfirm>
         </div>
       )
     },

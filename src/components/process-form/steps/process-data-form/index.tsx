@@ -12,21 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { formatCurrency } from '@/utils/format'
 
 export function ProcessDataForm() {
   const { formData, updateFormData } = useProcessForm()
   const [isChecked, setIsChecked] = useState(true)
   const [value, setValue] = useState('')
-
-  const formatCurrency = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    const formatted = new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-    }).format(Number(numbers) / 100)
-    return formatted
-  }
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, '')

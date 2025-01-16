@@ -11,9 +11,17 @@ import { ProcessFooter } from "./process-footer"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/utils/cn"
 import { useProcessDetails } from "@/hooks/useProcessDetails"
+import { useEffect } from "react"
+import { useParams } from "next/navigation"
 
 export function ProcessDetailsContent() {
   const { activeTab, setActiveTab, tabs } = useProcessDetails()
+  const { getLitigation } = useProcessDetails()
+  const { id } = useParams();
+
+  useEffect(() => {
+    getLitigation(String(id));
+  }, [id]);
 
   return (
     <div className="flex flex-col h-screen">

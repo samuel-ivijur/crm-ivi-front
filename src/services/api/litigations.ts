@@ -21,6 +21,20 @@ export const litigationsService = {
 
     return data.data
   },
+  getLitigation: async ({ id, idOrganization }: GetLitigation.Params): Promise<GetLitigation.Result["data"]> => {
+    const response = await fetch(`${API_URL}/litigations/${id}?idOrganization=${idOrganization}`, {
+      method: 'GET',
+      headers,
+    })
+
+    const data: GetLitigation.Result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Erro ao recuperar processo')
+    }
+
+    return data.data
+  }
 }
 
 export namespace GetLitigations {
@@ -53,54 +67,64 @@ export namespace GetLitigations {
   export type LitigationInfo = {
     id: string;
     processnumber: string;
-    instance: number;
-    court: string | null;
-    obs: string | null;
-    organizationid: string;
-    organizationname: string;
+    instance: string | null;
+    court: string;
+    obs: string;
     nick: string;
     idstatus: number;
+    clientidstatus: number;
+    clientstatus: string;
+    statuserrordescription: string;
+    idstatuserror: number;
     statusdescription: string;
-    createdat: string; // ISO date string
-    qualification: string;
-    idqualification: number;
+    createdat: string;
     idclient: string;
     clientname: string;
     clientphone: string;
-    clientidstatus: number;
-    clientstatus: string;
-    idstatuserror: number;
-    statuserrordescription: string;
-    idorganization: string;
+    qualification: string;
+    amountprogress: number;
+    externalstatusdescription: string;
+    externalstatusid: string;
+    adversepartyname?: string;
+    organizationid: string;
+    organizationname: string;
     idorganizationstatus: number;
     organizationstatus: string;
-    uf: string | null;
-    iduf: string | null;
-    case_cover: {
+    iduf: number;
+    uf: string;
+    tasks: {
       id: number;
-      distribution_type: string | null;
-      subject: string | null;
-      extra_subject: string | null;
-      area: string | null;
-      nature: string | null;
-      forum: string | null;
-      court: string | null;
-      court_system: string | null;
-      cause_value: number;
-      alternative_number: string;
-    };
-    amountprogress: number;
-    externalstatusdescription: string | null;
-    externalstatusid: number | null;
-    tasks: any[]; // Define a more specific type if available
-    adverseParties: {
-      id: number;
-      name: string;
-      type: {
+      title: string;
+      deadline: string;
+      createdat: string;
+      status: {
         id: number;
         description: string;
       };
-    }[];
+      priority: {
+        id: number;
+        description: string;
+      };
+    }[]
+    case_cover: {
+      id?: number,
+      distribution_type?: string,
+      distribution_date?: string,
+      subject?: string,
+      extra_subject?: string,
+      area?: string,
+      nature?: string,
+      forum?: string,
+      court?: string,
+      court_system?: string
+      cause_value?: string,
+      alternative_number?: string,
+    },
+    relatedProcesses: {
+      id: number;
+      processnumber: string;
+      instance: string;
+    }[]
     cadaster: {
       id: number;
       description: string;
@@ -108,21 +132,13 @@ export namespace GetLitigations {
   }
 }
 
-/*
-idOrganization:01J7C7EZD342605P37P677X674
-limit:10
-page:1
-//startDate:2024-10-01
-//endDate:2024-10-10
-//nick:ANILDO
-//litigation:5000504
-//instance:2
-//court:ASDSA
-//uf:1
-//adverseParty:TE
-//idAdverseParty[]:889
-//idQualification[]:4
-//qualification:autor
-//beneficiary:igor
-//idBeneficiary:01JA41TFJWRZEBHFXA32XVNPXH
-*/
+export namespace GetLitigation {
+  export type Params = {
+    id: string
+    idOrganization: string
+  }
+  export type Result = {
+    data: GetLitigations.LitigationInfo
+    message?: string
+  }
+}
