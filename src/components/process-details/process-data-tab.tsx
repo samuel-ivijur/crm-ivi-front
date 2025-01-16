@@ -19,6 +19,8 @@ import ModalConfirm from "../modal-confirm"
 
 export function ProcessDataTab() {
   const [isEditing, setIsEditing] = useState(false)
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     isActive: true,
     cnj: "40028922123456",
@@ -40,6 +42,26 @@ export function ProcessDataTab() {
 
   const handleSelectChange = (name: string) => (value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const editProcess = () => {
+    setIsEditing(false)
+    console.log(formData)
+  }
+
+  const handleCancel = () => {
+    setIsCancelModalOpen(false)
+    setIsSaveModalOpen(false)
+  }
+
+  const handleConfirmCancel = () => {
+    setIsEditing(false)
+    setIsCancelModalOpen(false)
+  }
+
+  const handleConfirmSave = () => {
+    setIsSaveModalOpen(false)
+    editProcess()
   }
 
   return (
@@ -185,13 +207,29 @@ export function ProcessDataTab() {
         {
           isEditing && (
             <div className="flex justify-end gap-2">
-              <ModalConfirm />
-              <Button variant="outline"> <X size={16} className="mr-2" /> Cancelar edição</Button>
-              <Button variant="default"> <Save size={16} className="mr-2" /> Salvar</Button>
+
+              <Button variant="outline" onClick={() => setIsCancelModalOpen(true)}> <X size={16} className="mr-2" /> Cancelar edição</Button>
+              <Button variant="default" onClick={() => setIsSaveModalOpen(true)}> <Save size={16} className="mr-2" /> Salvar</Button>
             </div>
           )
         }
       </CardContent>
+      <ModalConfirm
+        title="Cancelar edição"
+        description={"Tem certeza que deseja cancelar a edição?"}
+        onConfirm={handleConfirmCancel}
+        onCancel={handleCancel}
+        open={isCancelModalOpen}
+        onOpenChange={handleCancel}
+      />
+      <ModalConfirm
+        title="Salvar edição"
+        description={"Tem certeza que deseja salvar a edição?"}
+        onConfirm={handleConfirmSave}
+        onCancel={handleCancel}
+        open={isSaveModalOpen}
+        onOpenChange={handleCancel}
+      />
     </Card>
   )
 } 
