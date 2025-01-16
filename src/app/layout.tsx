@@ -1,6 +1,9 @@
 import '../styles/globals.css'
 import { Inter } from 'next/font/google'
 import ReactQueryProvider from '@/utils/react-query'
+import { Sidebar } from "@/components/common/sidebar"
+import { SidebarProvider } from "@/components/common/sidebar/sidebar-context"
+import { MainContent } from "@/components/common/main-content"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,7 +20,14 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <ReactQueryProvider>
-        <body className={inter.className}>{children}</body>
+        <body className={inter.className}>
+          <SidebarProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <MainContent>{children}</MainContent>
+            </div>
+          </SidebarProvider>
+        </body>
       </ReactQueryProvider>
     </html>
   )
