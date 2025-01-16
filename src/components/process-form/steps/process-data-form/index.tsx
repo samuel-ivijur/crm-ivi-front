@@ -48,7 +48,7 @@ export function ProcessDataForm() {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row items-start gap-6">
         <div className="space-y-2 w-full lg:w-auto">
-          <Label htmlFor="status">Status Processo</Label>
+          <Label htmlFor="status">Status</Label>
           <div className="flex items-center gap-2 rounded-lg border bg-white p-2">
             <Switch 
               id="status" 
