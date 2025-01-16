@@ -1,29 +1,28 @@
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from "@radix-ui/react-alert-dialog"
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "../ui";
-import { AlertDialogFooter, AlertDialogHeader } from "../ui/alert-dialog";
-
-const ModalConfirm = () => {
-
-    return (
-        <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button variant="outline">Show Dialog</Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete your
-                        account and remove your data from our servers.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction>Continue</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    )
+type ModalConfirmProps = {
+    title: string,
+    description: string,
+    onConfirm: () => void,
+    onCancel: () => void,
+    open: boolean,
+    onOpenChange: (open: boolean) => void
 }
+
+const ModalConfirm = ({ title, description, onConfirm, onCancel, onOpenChange, open }: ModalConfirmProps) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl space-y-6">
+            <DialogHeader>
+                <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <DialogDescription>{description}</DialogDescription>
+            <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+                <Button variant="default" onClick={onConfirm}>Confirmar</Button>
+            </div>
+        </DialogContent>
+    </Dialog>
+);
 
 export default ModalConfirm;
