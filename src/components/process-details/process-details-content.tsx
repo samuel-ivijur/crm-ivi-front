@@ -11,13 +11,38 @@ import { ProcessFooter } from "./process-footer"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/utils/cn"
 import { useProcessDetails } from "@/hooks/useProcessDetails"
-import { useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { redirect, useParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export function ProcessDetailsContent() {
+  const { toast } = useToast()
   const { activeTab, setActiveTab, tabs } = useProcessDetails()
-  const { getLitigation } = useProcessDetails()
+  const { getLitigation, getLitigationQuery } = useProcessDetails()
   const { id } = useParams();
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
+
+  const checkData = () => {
+    if (
+      !getLitigationQuery.data
+      && !getLitigationQuery.isFetching
+      && (lastUpdated && lastUpdated === getLitigationQuery.dataUpdatedAt)
+    ) {
+      toast({
+        title: 'Erro ao carregar dados do processo',
+        description: 'Não foi possível carregar os dados do processo.',
+        variant: 'destructive',
+      })
+      return redirect('/processos')
+    }
+
+    setLastUpdated(getLitigationQuery.dataUpdatedAt)
+  }
+
+  useEffect(() => {
+    console.log(getLitigationQuery.isFetching, lastUpdated,getLitigationQuery.data )
+    checkData()
+  }, [getLitigationQuery.data])
 
   useEffect(() => {
     getLitigation(String(id));
@@ -28,7 +53,7 @@ export function ProcessDetailsContent() {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           <div className="container mx-auto p-4 lg:p-6 space-y-6">
-            <ProcessHeader />
+            <ProcessHeader data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} />
             
             <Tabs 
               value={activeTab} 
@@ -68,7 +93,7 @@ export function ProcessDetailsContent() {
 
               <div className="mt-4">
                 <TabsContent value="dados">
-                  <ProcessDataTab />
+                  <ProcessDataTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} />
                 </TabsContent>
                 
                 <TabsContent value="partes">
@@ -91,7 +116,7 @@ export function ProcessDetailsContent() {
           </div>
         </ScrollArea>
       </div>
-      <ProcessFooter />
+      <ProcessFooter data={getLitigationQuery.data} />
     </div>
   )
 } 

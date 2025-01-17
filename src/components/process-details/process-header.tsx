@@ -1,11 +1,16 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { useProcessDetails } from "@/hooks/useProcessDetails"
-import { User, CheckCircle } from 'lucide-react'
 import { Skeleton } from "../ui/skeleton"
+import { GetLitigation } from "@/services/api/litigations"
+import { User, CheckCircle } from 'lucide-react'
+import { TaskStatus } from "@/constants"
 
-export function ProcessHeader() {
-  const { getLitigationQuery } = useProcessDetails()
+type ProcessHeaderProps = {
+  data: GetLitigation.Result["data"] | null
+  isLoading: boolean
+}
+
+export function ProcessHeader({ data, isLoading }: ProcessHeaderProps) {
 
   const HeaderSkeleton = ({ n }: { n: number }) => {
     return (
@@ -21,7 +26,7 @@ export function ProcessHeader() {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card className="col-span-full lg:col-span-1">
         <CardContent className="p-4">
-          {getLitigationQuery.isLoading ? <HeaderSkeleton n={3} /> :
+          {isLoading ? <HeaderSkeleton n={3} /> :
             (
               <div className="flex flex-wrap gap-2">
                 <Badge variant="warning" className="bg-yellow-100 text-yellow-800">
@@ -41,8 +46,8 @@ export function ProcessHeader() {
             <User className="h-5 w-5 text-gray-500" />
             <div className="w-full">
               <div className="text-sm font-medium">Cliente</div>
-              {getLitigationQuery.isLoading ? <HeaderSkeleton n={1} /> :
-                (<div className="text-sm text-gray-500">Teste 123</div>)
+              {isLoading ? <HeaderSkeleton n={1} /> :
+                (<div className="text-sm text-gray-500">{data?.clientname}</div>)
               }
             </div>
           </div>
@@ -55,7 +60,7 @@ export function ProcessHeader() {
             <User className="h-5 w-5 text-gray-500" />
             <div className="w-full">
               <div className="text-sm font-medium">Responsável</div>
-              {getLitigationQuery.isLoading ? <HeaderSkeleton n={1} /> :
+              {isLoading ? <HeaderSkeleton n={1} /> :
                 (<div className="text-sm text-gray-500">-</div>)
               }
             </div>
@@ -71,15 +76,15 @@ export function ProcessHeader() {
               <div className="text-sm font-medium">Total de tarefas</div>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <div className="text-center">
-                  <div className="text-lg font-bold">{getLitigationQuery.isLoading ? <HeaderSkeleton n={1} /> : 1}</div>
+                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : data?.tasks?.length}</div>
                   <div className="text-xs text-gray-500">Total</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{getLitigationQuery.isLoading ? <HeaderSkeleton n={1} /> : 1}</div>
+                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter( task => [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.LATE].includes(task.status.id)).length}</div>
                   <div className="text-xs text-gray-500">Pendentes</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{getLitigationQuery.isLoading ? <HeaderSkeleton n={1} /> : 0}</div>
+                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter( task => task.status.id === TaskStatus.COMPLETED).length}</div>
                   <div className="text-xs text-gray-500">Concluídas</div>
                 </div>
               </div>

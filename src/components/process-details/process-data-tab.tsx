@@ -11,17 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "../ui"
 import { Pencil, Save, X } from "lucide-react"
 import ModalConfirm from "../modal-confirm"
-import { redirect, useParams } from "next/navigation"
-import { useProcessDetails } from "@/hooks/useProcessDetails"
 import { LitigationStatus } from "@/constants/litigation"
-import { useToast } from "@/hooks/use-toast"
 import ProcessDataTabSkeleton from "./process-data-tab-skeleton"
 import { formatCurrency } from "@/utils/format"
+import { GetLitigation } from "@/services/api/litigations"
+import AutoComplete from "../autocomplete"
+import InputTags from "../input-tags"
+import { DatePicker } from "../datepicker"
 
 type FormData = {
   isActive: boolean | null;
@@ -36,15 +36,19 @@ type FormData = {
   court: string | null;
   courtSystem: string | null;
   causeValue: string | null;
+  classes: string[];
 }
-export function ProcessDataTab() {
-  const { toast } = useToast()
-  const { getLitigationQuery } = useProcessDetails()
+
+type ProcessDataTabProps = {
+  data: GetLitigation.Result["data"] | null
+  isLoading: boolean
+}
+export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
 
   const [isEditing, setIsEditing] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
-  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
+  
   const [formData, setFormData] = useState<FormData>({
     isActive: null,
     cnj: null,
@@ -57,26 +61,25 @@ export function ProcessDataTab() {
     extraSubject: null,
     court: null,
     courtSystem: null,
-    causeValue: null
+    causeValue: null,
+    classes: []
   })
 
-  const { id } = useParams();
-
-  const parseDataToFormData = () => {
-    if (!getLitigationQuery.data) return
+  const parseDataToFormData = (data: GetLitigation.Result["data"]) => {
     setFormData({
-      isActive: getLitigationQuery.data.idstatus === LitigationStatus.ACTIVE,
-      cnj: getLitigationQuery.data.processnumber || '',
-      alternative: getLitigationQuery.data.case_cover?.alternative_number || '',
-      instance: String(getLitigationQuery.data.instance || ''),
-      distributionDate: getLitigationQuery.data.case_cover?.distribution_date || '',
-      distributionType: getLitigationQuery.data.case_cover?.distribution_type || '',
-      area: getLitigationQuery.data.case_cover?.area || '',
-      subject: getLitigationQuery.data.case_cover?.subject || '',
-      extraSubject: getLitigationQuery.data.case_cover?.extra_subject || '',
-      court: getLitigationQuery.data.case_cover?.court || '',
-      courtSystem: getLitigationQuery.data.case_cover?.court_system || '',
-      causeValue: getLitigationQuery.data.case_cover?.cause_value || ''
+      isActive: data.idstatus === LitigationStatus.ACTIVE,
+      cnj: data.processnumber || '',
+      alternative: data.case_cover?.alternative_number || '',
+      instance: String(data.instance || ''),
+      distributionDate: data.case_cover?.distribution_date || '',
+      distributionType: data.case_cover?.distribution_type || '',
+      area: data.case_cover?.area || '',
+      subject: data.case_cover?.subject || '',
+      extraSubject: data.case_cover?.extra_subject || '',
+      court: data.case_cover?.court || '',
+      courtSystem: data.case_cover?.court_system || '',
+      causeValue: data.case_cover?.cause_value || '',
+      classes: ['Promessa de Compra e Venda / Coisas C/C']
     })
   }
 
@@ -85,13 +88,12 @@ export function ProcessDataTab() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (name: string) => (value: string) => {
+  const handleSelectChange = (name: string) => (value: any) => {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
   const editProcess = () => {
     setIsEditing(false)
-    console.log(formData)
   }
 
   const handleClosePopover = () => {
@@ -102,7 +104,7 @@ export function ProcessDataTab() {
   const handleConfirmCancel = () => {
     setIsEditing(false)
     setIsCancelModalOpen(false)
-    parseDataToFormData()
+    if (data)parseDataToFormData(data)
   }
 
   const handleConfirmSave = () => {
@@ -115,24 +117,6 @@ export function ProcessDataTab() {
     setFormData((prev) => ({ ...prev, causeValue: formattedValue }))
   }
 
-  const checkData = () => {
-    if (
-      !getLitigationQuery.data
-      && !getLitigationQuery.isFetching
-      && (lastUpdated && lastUpdated === getLitigationQuery.dataUpdatedAt)
-    ) {
-      toast({
-        title: 'Erro ao carregar dados do processo',
-        description: 'Não foi possível carregar os dados do processo.',
-        variant: 'destructive',
-      })
-      return redirect('/processos')
-    }
-
-    parseDataToFormData()
-    setLastUpdated(getLitigationQuery.dataUpdatedAt)
-  }
-
   const toggleEditing = () => {
     const newIsEditing = !isEditing
     if (newIsEditing) {
@@ -142,9 +126,8 @@ export function ProcessDataTab() {
   }
 
   useEffect(() => {
-    console.log(getLitigationQuery.isFetching, lastUpdated,getLitigationQuery.data )
-    checkData()
-  }, [getLitigationQuery.data, id])
+    if (data) parseDataToFormData(data)
+  }, [data])
 
   return (
     <Card>
@@ -157,7 +140,7 @@ export function ProcessDataTab() {
                 variant="default"
                 size="sm"
                 onClick={toggleEditing}
-                disabled={isEditing || getLitigationQuery.isLoading}
+                disabled={isEditing || isLoading}
               >
                 <Pencil size={16} />
               </Button>
@@ -167,7 +150,7 @@ export function ProcessDataTab() {
       </CardHeader>
       <CardContent className="space-y-6">
         {
-          getLitigationQuery.isLoading ? <ProcessDataTabSkeleton /> :
+          isLoading ? <ProcessDataTabSkeleton /> :
             (
               <>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -228,33 +211,43 @@ export function ProcessDataTab() {
 
                   <div className="space-y-2">
                     <Label htmlFor="distribution-date">Data Distribuição</Label>
-                    <Input id="distribution-date" name="distributionDate" value={formData.distributionDate || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
+                    < DatePicker 
+                      className="w-full"
+                      value={formData?.distributionDate ? new Date(formData.distributionDate) : null}
+                      setValue={handleSelectChange("distributionDate")}
+                      placeholder="Selecione a data de distribuição"
+                      disabled={!isEditing}
+                    />
+                    {/* <Input 
+                      id="distribution-date" 
+                      name="distributionDate" 
+                      value={formData.distributionDate || ''} 
+                      onChange={handleInputChange} 
+                      className="w-full" 
+                      disabled={!isEditing} 
+                    /> */}
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="distribution-type">Tipo da Distribuição</Label>
-                    <Select value={formData.distributionType || ''} onValueChange={handleSelectChange("distributionType")} disabled={!isEditing} >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sorteio">SORTEIO</SelectItem>
-                        <SelectItem value="dependencia">DEPENDÊNCIA</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <AutoComplete
+                      suggestions={['SORTEIO', 'DEPENDÊNCIA', 'PREVENÇÃO']}
+                      placeholder="Digite o tipo da distribuição"
+                      setValue={handleSelectChange("distributionType")}
+                      value={formData.distributionType || ''}
+                      disabled={!isEditing}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="area">Área</Label>
-                    <Select value={formData.area || ''} onValueChange={handleSelectChange("area")} disabled={!isEditing}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="civel">CÍVEL</SelectItem>
-                        <SelectItem value="criminal">CRIMINAL</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <AutoComplete
+                      suggestions={['CÍVEL', 'CRIMINAL', 'ADMINISTRATIVO', 'TRABALHISTA', 'FISCAL', 'TRIBUTÁRIO', 'CONCILIATÓRIO', 'ESPECIAL', 'ESPECIALISTA', 'ESPECIALIZADO']}
+                      placeholder="Digite a área"
+                      setValue={handleSelectChange("area")}
+                      value={formData.area || ''}
+                      disabled={!isEditing}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -264,15 +257,18 @@ export function ProcessDataTab() {
 
                   <div className="space-y-2">
                     <Label htmlFor="extra-subject">Assunto Extra</Label>
-                    <Input id="extra-subject" name="extraSubject" value={formData.extraSubject || ''} onChange={handleInputChange} className="w-full" />
+                    <Input id="extra-subject" name="extraSubject" value={formData.extraSubject || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="classes">Classes</Label>
                     <div className="flex flex-wrap gap-2 p-2 border rounded-md">
-                      <Badge className="bg-[#0146cf]">
-                        Promessa de Compra e Venda / Coisas C/C
-                      </Badge>
+                    <InputTags 
+                      placeholder="Digite a classe"
+                      setTags={handleSelectChange("classes")}
+                      disabled={!isEditing}
+                      tags={formData.classes || []}
+                    />
                     </div>
                   </div>
 
