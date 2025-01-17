@@ -1,0 +1,47 @@
+.autocomplete {
+    position: relative;
+}
+
+.autocomplete-input {
+    width: 100%;
+}
+
+.suggestions-container {
+    position: absolute;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 3px 8px #d3d3d3;
+    margin-top: 4px;
+    background-color: #fff;
+    z-index: 1000;
+}
+
+.suggestions-container > div {
+    padding: 8px;
+    color: gray;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #eee;
+}
+
+.suggestions-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 0.875rem;
+    transition: background-color 0.2s ease;
+}
+
+.suggestion-item:focus {
+    outline: none;
+    background-color: #f0f0f0;
+}
+
+.suggestion-item:hover {
+    background-color: #d3d3d3;
+}
