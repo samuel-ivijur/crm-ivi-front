@@ -49,8 +49,9 @@ type FormData = {
 type ProcessDataTabProps = {
   data: GetLitigation.Result["data"] | null
   isLoading: boolean
+  invalidateLitigation: (id: string) => void
 }
-export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
+export function ProcessDataTab({ data, isLoading, invalidateLitigation }: ProcessDataTabProps) {
 
   const [isEditing, setIsEditing] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)

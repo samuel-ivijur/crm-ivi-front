@@ -34,6 +34,32 @@ export const litigationsService = {
     }
 
     return data.data
+  },
+  addAdverseParty: async ({ idLitigation, idOrganization, adverseParty }: AddAdverseParty.Params): Promise<AddAdverseParty.Result> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/adverseParty`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ idOrganization, adverseParty }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao adicionar parte adversa');
+    }
+
+    const data: AddAdverseParty.Result = await response.json()
+    return data
+  },
+  removeAdverseParty: async ({ id, idAdverseParty, idOrganization }: RemoveAdverseParty.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations/${id}/adverseParty/${idAdverseParty}?idOrganization=${idOrganization}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao remover parte adversa');
+    }
   }
 }
 
@@ -64,6 +90,19 @@ export namespace GetLitigations {
     }
     message?: string
   }
+  export type AdverseParty = {
+    id: number;
+    name: string;
+    document?: string;
+    type: {
+      id: number;
+      description: string;
+    };
+    personType?: {
+      id: number;
+      description: string;
+    };
+  }
   export type LitigationInfo = {
     id: string;
     processnumber: string;
@@ -85,13 +124,13 @@ export namespace GetLitigations {
     amountprogress: number;
     externalstatusdescription: string;
     externalstatusid: string;
-    adversepartyname?: string;
     organizationid: string;
     organizationname: string;
     idorganizationstatus: number;
     organizationstatus: string;
     iduf: number;
     uf: string;
+    adverseParties: AdverseParty[]
     tasks: {
       id: number;
       title: string;
@@ -140,5 +179,30 @@ export namespace GetLitigation {
   export type Result = {
     data: GetLitigations.LitigationInfo
     message?: string
+  }
+}
+
+export namespace AddAdverseParty {
+  export type Params = {
+    idLitigation: string;
+    idOrganization: string;
+    adverseParty: {
+      name: string;
+      document?: string;
+      idType: number;
+      idPersonType: number;
+    }
+  }
+  export type Result = {
+    id: number;
+  }
+}
+
+
+export namespace RemoveAdverseParty {
+  export type Params = {
+    id: string;
+    idAdverseParty: number;
+    idOrganization: string;
   }
 }

@@ -8,10 +8,13 @@ type PopoverProps = {
     title?: string
     description?: string
     onConfirm: () => Promise<any>
+    autoConfirm?: boolean
 }
-const PopConfirm = ({ children, title, description, onConfirm }: PopoverProps) => {
+
+const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = false }: PopoverProps) => {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+
     const handleClickOk = async () => {
         setLoading(true)
         await onConfirm()
@@ -19,8 +22,13 @@ const PopConfirm = ({ children, title, description, onConfirm }: PopoverProps) =
         setOpen(false)
     }
 
+    const changeChange = (open: boolean) => {
+        if (autoConfirm) return onConfirm()
+        setOpen(open)
+    }
+
     return (
-        <ReactPopover.Root open={open} onOpenChange={setOpen}>
+        <ReactPopover.Root open={autoConfirm ? false : open} onOpenChange={changeChange}>
             <ReactPopover.Trigger asChild>{children}</ReactPopover.Trigger>
             <ReactPopover.Portal>
                 <ReactPopover.Content className="Popconfirm" sideOffset={5}>

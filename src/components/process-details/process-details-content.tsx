@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast"
 export function ProcessDetailsContent() {
   const { toast } = useToast()
   const { activeTab, setActiveTab, tabs } = useProcessDetails()
-  const { getLitigation, getLitigationQuery } = useProcessDetails()
+  const { getLitigation, getLitigationQuery, invalidateLitigation } = useProcessDetails()
   const { id } = useParams();
   const [lastUpdated, setLastUpdated] = useState<number | null>(null)
 
@@ -92,11 +92,11 @@ export function ProcessDetailsContent() {
 
               <div className="mt-4">
                 <TabsContent value="dados">
-                  <ProcessDataTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} />
+                  <ProcessDataTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} invalidateLitigation={invalidateLitigation}/>
                 </TabsContent>
                 
                 <TabsContent value="partes">
-                  <PartiesTab />
+                  <PartiesTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} invalidateLitigation={invalidateLitigation} />
                 </TabsContent>
                 
                 <TabsContent value="prazos">
