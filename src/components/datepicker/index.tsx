@@ -15,18 +15,20 @@ import {
 import { ptBR } from "date-fns/locale"
 
 type DatePickerProps = {
+    id?: string
     value: Date | null
     setValue: (value: Date | null) => void
     placeholder?: string
     disabled?: boolean
     className?: string
 }
-export function DatePicker({ value, setValue, placeholder, disabled, className }: DatePickerProps) {
+export function DatePicker({ id, value, setValue, placeholder, disabled, className }: DatePickerProps) {
 
     return (
         <Popover>
             <PopoverTrigger asChild disabled={disabled}>
                 <Button
+                    id={id}
                     variant={"outline"}
                     className={cn(
                         "w-[280px] justify-start text-left font-normal",
