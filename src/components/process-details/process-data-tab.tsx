@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -22,6 +22,11 @@ import { GetLitigation } from "@/services/api/litigations"
 import AutoComplete from "../autocomplete"
 import InputTags from "../input-tags"
 import { DatePicker } from "../datepicker"
+import { Combobox } from "../combo-box"
+import { courtSystems, UF } from "@/constants"
+import { useCourt } from "@/hooks/useCourt"
+import { DebounceCombobox } from "../debounce-combo-box"
+import { useCounty } from "@/hooks/useCounty"
 
 type FormData = {
   isActive: boolean | null;
@@ -37,6 +42,8 @@ type FormData = {
   courtSystem: string | null;
   causeValue: string | null;
   classes: string[];
+  uf: number | null;
+  county: string | null;
 }
 
 type ProcessDataTabProps = {
@@ -48,7 +55,9 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
-  
+  const { getCourtsQuery } = useCourt()
+  const { getCountiesQuery, changeFilter: changeCountyFilter } = useCounty()
+
   const [formData, setFormData] = useState<FormData>({
     isActive: null,
     cnj: null,
@@ -62,8 +71,20 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
     court: null,
     courtSystem: null,
     causeValue: null,
-    classes: []
+    classes: [],
+    uf: null,
+    county: null
   })
+
+  const handleFetchCounty = async (value: string) => {
+    const idUf = formData.uf ? +formData.uf : undefined;
+    changeCountyFilter({
+      searchTerm: value,
+      limit: 10,
+      page: 1,
+      idUf
+    });
+  }
 
   const parseDataToFormData = (data: GetLitigation.Result["data"]) => {
     setFormData({
@@ -79,7 +100,9 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
       court: data.case_cover?.court || '',
       courtSystem: data.case_cover?.court_system || '',
       causeValue: data.case_cover?.cause_value || '',
-      classes: ['Promessa de Compra e Venda / Coisas C/C']
+      classes: ['Promessa de Compra e Venda / Coisas C/C'],
+      uf: data?.iduf || null,
+      county: ''
     })
   }
 
@@ -125,9 +148,23 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
     setIsEditing(newIsEditing)
   }
 
+  const handleChangeUF = (value: string | number) => {
+    setFormData(prev => ({ ...prev, county: null, uf: +value }))
+    changeCountyFilter({
+      idUf: +value,
+      page: 1
+    })
+  }
+
   useEffect(() => {
     if (data) parseDataToFormData(data)
   }, [data])
+
+  useEffect(() => {
+    if (getCountiesQuery.data) {
+      console.log(getCountiesQuery.data)
+    }
+  }, [getCountiesQuery.data])
 
   return (
     <Card>
@@ -212,20 +249,13 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
                   <div className="space-y-2">
                     <Label htmlFor="distribution-date">Data Distribuição</Label>
                     < DatePicker 
+                      id="distribution-date"
                       className="w-full"
                       value={formData?.distributionDate ? new Date(formData.distributionDate) : null}
                       setValue={handleSelectChange("distributionDate")}
                       placeholder="Selecione a data de distribuição"
                       disabled={!isEditing}
                     />
-                    {/* <Input 
-                      id="distribution-date" 
-                      name="distributionDate" 
-                      value={formData.distributionDate || ''} 
-                      onChange={handleInputChange} 
-                      className="w-full" 
-                      disabled={!isEditing} 
-                    /> */}
                   </div>
 
                   <div className="space-y-2">
@@ -252,12 +282,94 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
 
                   <div className="space-y-2">
                     <Label htmlFor="subject">Assunto</Label>
-                    <Input id="subject" name="subject" value={formData.subject || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
+                    <Input 
+                      id="subject"
+                      name="subject"
+                      value={formData.subject || ''}
+                      onChange={handleInputChange}
+                      className="w-full"
+                      disabled={!isEditing}
+                      placeholder="Digite o assunto"
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="extra-subject">Assunto Extra</Label>
-                    <Input id="extra-subject" name="extraSubject" value={formData.extraSubject || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
+                    <Input 
+                      id="extra-subject"
+                      name="extraSubject"
+                      value={formData.extraSubject || ''}
+                      onChange={handleInputChange}
+                      className="w-full"
+                      disabled={!isEditing}
+                      placeholder="Digite o assunto extra"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="court">Tribunal</Label>
+                    <Combobox 
+                      id="court"
+                      options={(getCourtsQuery.data?.courts || []).map((court) => ({ value: court.id.toString(), label: court.name }))}
+                      value={formData.court || 1}
+                      setValue={handleSelectChange("court")}
+                      className="w-full"
+                      disabled={!isEditing}
+                      buttonWidth="200px"
+                      placeholder="Selecione a comarca"
+                      inputPlaceholder="Digite a comarca"
+                      emptyMessage=""
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="court-system">Sistema Tribunal</Label>
+                    <Combobox 
+                      id="court-system"
+                      options={courtSystems.map((courtSystem) => ({ value: courtSystem.id.toString(), label: courtSystem.name }))}
+                      value={formData.courtSystem || ''}
+                      setValue={handleSelectChange("courtSystem")}
+                      className="w-full"
+                      disabled={!isEditing}
+                      buttonWidth="200px"
+                      placeholder="Selecione o sistema do tribunal"
+                      inputPlaceholder="Selecione o sistema do tribunal"
+                      emptyMessage=""
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="uf">UF</Label>
+                    <Combobox 
+                      id="uf"
+                      value={formData.uf || ''}
+                      setValue={handleChangeUF}
+                      className="w-full"
+                      disabled={!isEditing}
+                      options={Object.values(UF).map(({ id, uf }) => ({ value: String(id), label: uf }))}
+                      buttonWidth="200px"
+                      placeholder="Selecione a UF"
+                      inputPlaceholder="Digite a UF"
+                      emptyMessage="UF não encontrada"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="county">Comarca</Label>
+                    <DebounceCombobox 
+                      id="county"
+                      fetchOptions={handleFetchCounty}
+                      options={(getCountiesQuery.data?.counties || []).map((county) => ({ 
+                        value: county.id.toString(), 
+                        label: county.name ? `${county.name} - ${county.uf.name}` : `COMARCA DE ${county.city.name} - ${county.uf.name}`
+                      }))}
+                      className="w-full"
+                      disabled={!isEditing}
+                      value={formData.county || ''}
+                      setValue={handleSelectChange("county")}
+                      buttonWidth="200px"
+                      placeholder="Selecione a comarca"
+                      inputPlaceholder="Digite a comarca"
+                      emptyMessage="Nenhuma comarca encontrada"
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -271,32 +383,7 @@ export function ProcessDataTab({ data, isLoading }: ProcessDataTabProps) {
                     />
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="court">Tribunal</Label>
-                    <Select value={formData.court || ''} onValueChange={handleSelectChange("court")} disabled={!isEditing}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pje">PJE</SelectItem>
-                        <SelectItem value="esaj">ESAJ</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="court-system">Sistema Tribunal</Label>
-                    <Select value={formData.courtSystem || ''} onValueChange={handleSelectChange("courtSystem")} disabled={!isEditing}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pje">PJE</SelectItem>
-                        <SelectItem value="esaj">ESAJ</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  
                 </div>
                 {
                   isEditing && (

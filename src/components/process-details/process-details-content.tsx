@@ -40,7 +40,6 @@ export function ProcessDetailsContent() {
   }
 
   useEffect(() => {
-    console.log(getLitigationQuery.isFetching, lastUpdated,getLitigationQuery.data )
     checkData()
   }, [getLitigationQuery.data])
 
