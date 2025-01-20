@@ -18,6 +18,8 @@ import { adversePartyTypeOptions, PersonType, personTypeOptions } from "@/consta
 import CustomMaskedInput from "../MaskedInput"
 import { toast } from "@/hooks/use-toast"
 import PopConfirm from "../popconfirm"
+import Image from "next/image";
+import NoData from "@/assets/svg/nodata.svg"
 
 interface PartiesTabProps {
   data: GetLitigation.Result["data"] | null
@@ -141,7 +143,15 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
       }
 
       setIsSaving(true)
-      const { id } = await litigationsService.addAdverseParty({
+      if (selectedParty!.id) {
+        await litigationsService.removeAdverseParty({
+          id: data!.id,
+          idAdverseParty: selectedParty!.id,
+          idOrganization: data!.organizationid,
+        })
+        invalidateLitigation(data!.id)
+      }
+      await litigationsService.addAdverseParty({
         idLitigation: data!.id,
         idOrganization: data!.organizationid,
         adverseParty: {
@@ -232,7 +242,7 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         </Button>
       </div>
 
-      {selectedParty && (
+      {selectedParty ? (
         <div className="space-y-4 rounded-lg border p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Parte Selecionada</h3>
@@ -274,6 +284,7 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
                   </Label>
                   <CustomMaskedInput
                     id={`document-${selectedParty.id}-${PersonType.PERSON}`}
+                    key={`document-${selectedParty.id}-${PersonType.PERSON}`}
                     mask="111.111.111-11"
                     placeholder="___.___.___-__"
                     value={selectedParty.document || ''}
@@ -289,6 +300,7 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
                   </Label>
                   <CustomMaskedInput
                     id={`document-${selectedParty.id}-${PersonType.COMPANY}`}
+                    key={`document-${selectedParty.id}-${PersonType.COMPANY}`}
                     mask="11.111.111/1111-11"
                     placeholder="__.___.___/____-__"
                     value={selectedParty.document || ''}
@@ -360,6 +372,11 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
               loading={isSaving}
             > <Save size={16} className="mr-2" /> Salvar</Button>
           </div>
+        </div>
+      ) : (
+        <div className="space-y-4 rounded-lg border p-4 flex flex-col items-center justify-center">
+          <Image src={NoData} alt="Nenhuma parte selecionada" width={200} height={200} /> 
+          <p className="text-sm text-gray-500">Nenhuma parte selecionada</p>
         </div>
       )}
     </div>
