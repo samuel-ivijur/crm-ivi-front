@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,7 @@ import ModalConfirm from "../modal-confirm"
 import { LitigationStatus } from "@/constants/litigation"
 import ProcessDataTabSkeleton from "./process-data-tab-skeleton"
 import { formatCurrency } from "@/utils/format"
-import { GetLitigation } from "@/services/api/litigations"
+import { GetLitigation, litigationsService } from "@/services/api/litigations"
 import AutoComplete from "../autocomplete"
 import InputTags from "../input-tags"
 import { DatePicker } from "../datepicker"
@@ -27,6 +27,7 @@ import { courtSystems, UF } from "@/constants"
 import { useCourt } from "@/hooks/useCourt"
 import { DebounceCombobox } from "../debounce-combo-box"
 import { useCounty } from "@/hooks/useCounty"
+import { toast } from "@/hooks/use-toast"
 
 type FormData = {
   isActive: boolean | null;
@@ -56,6 +57,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
   const [isEditing, setIsEditing] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const { getCourtsQuery } = useCourt()
   const { getCountiesQuery, changeFilter: changeCountyFilter } = useCounty()
 
@@ -116,10 +118,6 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const editProcess = () => {
-    setIsEditing(false)
-  }
-
   const handleClosePopover = () => {
     setIsCancelModalOpen(false)
     setIsSaveModalOpen(false)
@@ -128,12 +126,45 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
   const handleConfirmCancel = () => {
     setIsEditing(false)
     setIsCancelModalOpen(false)
-    if (data)parseDataToFormData(data)
+    if (data) parseDataToFormData(data)
   }
 
-  const handleConfirmSave = () => {
-    setIsSaveModalOpen(false)
-    editProcess()
+  const handleConfirmSave = async () => {
+    try {
+      setIsSaveModalOpen(false)
+      setIsSaving(true)
+      if (!data) return toast({
+        title: "Erro ao salvar os dados do processo!",
+        description: "Não foi possível salvar os dados do processo. Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+      await litigationsService.editLitigation({
+        id: data.id,
+        idOrganization: data.organizationid,
+        caseCover: {
+          alternativeNumber: formData?.alternative || '',
+          distributionDate: formData?.distributionDate || undefined,
+          distributionType: formData?.distributionType || '',
+          area: formData?.area || '',
+          subject: formData?.subject || '',
+          extraSubject: formData?.extraSubject || '',
+          idCourt: formData?.court ? +formData.court : undefined,
+          idCourtSystem: formData?.courtSystem ? +formData.courtSystem : undefined,
+          claimValue: formData?.causeValue || '',
+          classes: formData?.classes || [],
+          idCounty: formData?.county ? +formData.county : undefined,
+        }
+      })
+      setIsEditing(false)
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar os dados do processo!",
+        description: "Não foi possível salvar os dados do processo. Tente novamente mais tarde.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleValueChange = (value: string) => {
@@ -226,7 +257,14 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="cnj">Nº Processo CNJ</Label>
-                    <Input id="cnj" name="cnj" value={formData.cnj || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
+                    <Input
+                      id="cnj"
+                      name="cnj"
+                      value={formData.cnj || ''}
+                      onChange={handleInputChange}
+                      className="w-full"
+                      disabled={true}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -236,7 +274,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="instance">Instância</Label>
-                    <Select value={formData.instance || ''} onValueChange={handleSelectChange("instance")} disabled={!isEditing}>
+                    <Select value={formData.instance || ''} onValueChange={handleSelectChange("instance")} disabled={true}>
                       <SelectTrigger className="w-full">
                         <SelectValue />
                       </SelectTrigger>
@@ -249,7 +287,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="distribution-date">Data Distribuição</Label>
-                    < DatePicker 
+                    < DatePicker
                       id="distribution-date"
                       className="w-full"
                       value={formData?.distributionDate ? new Date(formData.distributionDate) : null}
@@ -283,7 +321,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="subject">Assunto</Label>
-                    <Input 
+                    <Input
                       id="subject"
                       name="subject"
                       value={formData.subject || ''}
@@ -296,7 +334,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="extra-subject">Assunto Extra</Label>
-                    <Input 
+                    <Input
                       id="extra-subject"
                       name="extraSubject"
                       value={formData.extraSubject || ''}
@@ -309,7 +347,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="court">Tribunal</Label>
-                    <Combobox 
+                    <Combobox
                       id="court"
                       options={(getCourtsQuery.data?.courts || []).map((court) => ({ value: court.id.toString(), label: court.name }))}
                       value={formData.court || 1}
@@ -324,7 +362,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="court-system">Sistema Tribunal</Label>
-                    <Combobox 
+                    <Combobox
                       id="court-system"
                       options={courtSystems.map((courtSystem) => ({ value: courtSystem.id.toString(), label: courtSystem.name }))}
                       value={formData.courtSystem || ''}
@@ -340,7 +378,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="uf">UF</Label>
-                    <Combobox 
+                    <Combobox
                       id="uf"
                       value={formData.uf || ''}
                       setValue={handleChangeUF}
@@ -355,11 +393,11 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="county">Comarca</Label>
-                    <DebounceCombobox 
+                    <DebounceCombobox
                       id="county"
                       fetchOptions={handleFetchCounty}
-                      options={(getCountiesQuery.data?.counties || []).map((county) => ({ 
-                        value: county.id.toString(), 
+                      options={(getCountiesQuery.data?.counties || []).map((county) => ({
+                        value: county.id.toString(),
                         label: county.name ? `${county.name} - ${county.uf.name}` : `COMARCA DE ${county.city.name} - ${county.uf.name}`
                       }))}
                       className="w-full"
@@ -376,22 +414,22 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                   <div className="space-y-2">
                     <Label htmlFor="classes">Classes</Label>
                     <div className="flex flex-wrap gap-2 p-2 border rounded-md">
-                    <InputTags 
-                      placeholder="Digite a classe"
-                      setTags={handleSelectChange("classes")}
-                      disabled={!isEditing}
-                      tags={formData.classes || []}
-                    />
+                      <InputTags
+                        placeholder="Digite a classe"
+                        setTags={handleSelectChange("classes")}
+                        disabled={!isEditing}
+                        tags={formData.classes || []}
+                      />
                     </div>
                   </div>
-                  
+
                 </div>
                 {
                   isEditing && (
                     <div className="flex justify-end gap-2">
 
-                      <Button variant="outline" onClick={() => setIsCancelModalOpen(true)}> <X size={16} className="mr-2" /> Cancelar edição</Button>
-                      <Button variant="default" onClick={() => setIsSaveModalOpen(true)}> <Save size={16} className="mr-2" /> Salvar</Button>
+                      <Button variant="outline" onClick={() => setIsCancelModalOpen(true)} disabled={isSaving}> <X size={16} className="mr-2" /> Cancelar edição</Button>
+                      <Button variant="default" onClick={() => setIsSaveModalOpen(true)} disabled={isSaving}> <Save size={16} className="mr-2" /> Salvar</Button>
                     </div>
                   )
                 }

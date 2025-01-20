@@ -1,10 +1,12 @@
 import { API_URL } from '@/config/api'
+import { LitigationStatus } from '@/constants';
 import { authCookies } from '@/utils/auth-cookies';
 
 const headers = {
   'Content-Type': 'application/json',
   'Authorization': 'Bearer ' + authCookies.getToken(),
 }
+
 export const litigationsService = {
   getLitigations: async (params: GetLitigations.Params): Promise<GetLitigations.Result["data"]> => {
     const queryParams = new URLSearchParams(params as any).toString();
@@ -34,6 +36,36 @@ export const litigationsService = {
     }
 
     return data.data
+  },
+  createLitigation: async (params: CreateLitigationParams): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao criar processo');
+    }
+  },
+  editLitigation: async (
+    params: {
+      id: string;
+      idOrganization: CreateLitigationParams['idOrganization'];
+    } & Partial<LitigationParams>
+  ): Promise<void> => {
+    const { id, ...data } = params;
+    const response = await fetch(`${API_URL}/litigations/${id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao editar processo');
+    }
   },
   addAdverseParty: async ({ idLitigation, idOrganization, adverseParty }: AddAdverseParty.Params): Promise<AddAdverseParty.Result> => {
     const response = await fetch(`${API_URL}/litigations/${idLitigation}/adverseParty`, {
@@ -198,7 +230,6 @@ export namespace AddAdverseParty {
   }
 }
 
-
 export namespace RemoveAdverseParty {
   export type Params = {
     id: string;
@@ -206,3 +237,54 @@ export namespace RemoveAdverseParty {
     idOrganization: string;
   }
 }
+export interface LitigationParams {
+  processNumber: string;
+  instance: number;
+  uf?: number;
+  idStatus?: LitigationStatus;
+  idClient?: string;
+  nick?: string;
+  obs?: string;
+  adverseParty?: {
+    name: string;
+    idType: number;
+    idPersonType: number;
+    document?: string;
+  }[];
+  caseCover: {
+    distributionDate?: string;
+    distributionType?: string;
+    area?: string;
+    nature?: string;
+    forum?: string;
+    idCourt?: number;
+    idCounty?: number;
+    claimValue?: string;
+    classes?: string[];
+    idCourtSystem?: number;
+    subject?: string;
+    extraSubject?: string;
+    alternativeNumber?: string;
+  }
+  tasks?: {
+    title: string;
+    deadline: string;
+    idResponsible?: string;
+    idPriority?: number;
+  }[];
+  relatedProcesses?: {
+    processNumber: string;
+    instance: number;
+  }[];
+  client?: {
+    name: string;
+    phone: string;
+    idQualification?: number;
+  };
+
+}
+export interface CreateLitigationParams {
+  idOrganization: string;
+  litigations: LitigationParams[];
+}
+

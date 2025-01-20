@@ -375,7 +375,7 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         </div>
       ) : (
         <div className="space-y-4 rounded-lg border p-4 flex flex-col items-center justify-center">
-          <Image src={NoData} alt="Nenhuma parte selecionada" width={200} height={200} /> 
+          <Image src={NoData} alt="Nenhuma parte selecionada" width={200} height={200} />
           <p className="text-sm text-gray-500">Nenhuma parte selecionada</p>
         </div>
       )}
