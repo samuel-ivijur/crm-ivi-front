@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
 
 export function ProcessDataForm() {
   const [isChecked, setIsChecked] = useState(true)
@@ -32,7 +33,7 @@ export function ProcessDataForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">Status Processo</Label>
@@ -60,18 +61,25 @@ export function ProcessDataForm() {
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 w-full lg:w-[180px]">
             <Label htmlFor="instance">
               Instância <span className="text-red-500">*</span>
             </Label>
-            <Select>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="1ª" />
+            <Select 
+              value={instanciaOptions[0].value}
+              onValueChange={(value) => {
+                // handleInputChange('instance', value)
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a instância" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1ª</SelectItem>
-                <SelectItem value="2">2ª</SelectItem>
-                <SelectItem value="3">3ª</SelectItem>
+                {instanciaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

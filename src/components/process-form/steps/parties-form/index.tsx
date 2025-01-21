@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Party } from "@/types/process"
+import { tiposParteOptions } from "@/lib/constants/parte-types"
 
 export function PartiesForm() {
   const [parties, setParties] = useState<Party[]>([
@@ -84,14 +85,16 @@ export function PartiesForm() {
               <Label htmlFor={`party-type-${party.id}`}>
                 Tipo de parte <span className="text-red-500">*</span>
               </Label>
-              <Select>
+              <Select defaultValue={party.partyType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo da parte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="autor">Autor</SelectItem>
-                  <SelectItem value="reu">Réu</SelectItem>
-                  <SelectItem value="testemunha">Testemunha</SelectItem>
+                  {tiposParteOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { RelatedProcess } from "@/types/process"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
 
 export function RelatedProcessesForm() {
   const [processes, setProcesses] = useState<RelatedProcess[]>([
@@ -67,12 +68,14 @@ export function RelatedProcessesForm() {
               </Label>
               <Select>
                 <SelectTrigger>
-                  <SelectValue placeholder="1ª Instância" />
+                  <SelectValue placeholder="Selecione a instância" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">1ª Instância</SelectItem>
-                  <SelectItem value="2">2ª Instância</SelectItem>
-                  <SelectItem value="3">3ª Instância</SelectItem>
+                  {instanciaOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

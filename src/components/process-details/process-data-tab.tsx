@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
+import { areaOptions } from "@/lib/constants/area-types"
 
 export function ProcessDataTab() {
   const [isActive, setIsActive] = useState(true)
@@ -75,15 +77,19 @@ export function ProcessDataTab() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instance">Instância</Label>
+            <Label htmlFor="instance">
+              Instância <span className="text-red-500">*</span>
+            </Label>
             <Select value={formData.instance} onValueChange={handleSelectChange("instance")}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a instância" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1ª</SelectItem>
-                <SelectItem value="2">2ª</SelectItem>
-                <SelectItem value="3">3ª</SelectItem>
+                {instanciaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -109,12 +115,15 @@ export function ProcessDataTab() {
           <div className="space-y-2">
             <Label htmlFor="area">Área</Label>
             <Select value={formData.area} onValueChange={handleSelectChange("area")}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a área" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="civel">CÍVEL</SelectItem>
-                <SelectItem value="criminal">CRIMINAL</SelectItem>
+                {areaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

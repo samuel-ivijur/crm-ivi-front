@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { tiposParteOptions } from "@/lib/constants/parte-types"
 
 interface Party {
   id: number
@@ -112,9 +113,11 @@ export function PartiesTab() {
                   <SelectValue placeholder="Selecione o tipo da parte" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="autor">Autor</SelectItem>
-                  <SelectItem value="reu">Réu</SelectItem>
-                  <SelectItem value="testemunha">Testemunha</SelectItem>
+                  {tiposParteOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

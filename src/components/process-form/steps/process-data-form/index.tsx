@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
+import { areaOptions } from "@/lib/constants/area-types"
 
 export function ProcessDataForm() {
   const { formData, updateFormData } = useProcessForm()
@@ -83,12 +85,14 @@ export function ProcessDataForm() {
               onValueChange={(value) => handleInputChange('instance', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="1ª" />
+                <SelectValue placeholder="Selecione a instância" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1ª</SelectItem>
-                <SelectItem value="2">2ª</SelectItem>
-                <SelectItem value="3">3ª</SelectItem>
+                {instanciaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -136,13 +140,24 @@ export function ProcessDataForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="area">Área</Label>
-          <Input 
-            id="area"
-            placeholder="Digite a área"
+          <Label htmlFor="area">
+            Área <span className="text-red-500">*</span>
+          </Label>
+          <Select
             value={formData.processData.area}
-            onChange={(e) => handleInputChange('area', e.target.value)}
-          />
+            onValueChange={(value) => handleInputChange('area', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a área" />
+            </SelectTrigger>
+            <SelectContent>
+              {areaOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">

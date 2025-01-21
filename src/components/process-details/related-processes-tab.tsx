@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
 
 interface RelatedProcess {
   id: number
@@ -74,12 +75,14 @@ export function RelatedProcessesTab() {
             </Label>
             <Select name="instance" required>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+                <SelectValue placeholder="Selecione a instância" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1ª Instância</SelectItem>
-                <SelectItem value="2">2ª Instância</SelectItem>
-                <SelectItem value="3">3ª Instância</SelectItem>
+                {instanciaOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -110,7 +113,9 @@ export function RelatedProcessesTab() {
                       <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
                     </TableCell>
                     <TableCell>{process.number}</TableCell>
-                    <TableCell>{process.instance}ª Instância</TableCell>
+                    <TableCell>
+                      {instanciaOptions.find(opt => opt.value === process.instance)?.label}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
