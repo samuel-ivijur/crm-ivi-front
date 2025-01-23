@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 import { useState } from "react"
 
-export default function FAQPage() {
+export default function FAQPage(): JSX.Element {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
