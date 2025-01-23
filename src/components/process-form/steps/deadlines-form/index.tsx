@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Deadline } from "@/types/process"
+import { TaskPriorities, TaskPriorityLabels } from "@/constants"
 
 export function DeadlinesForm() {
   const [deadlines, setDeadlines] = useState<Deadline[]>([])
@@ -79,9 +80,11 @@ export function DeadlinesForm() {
               <SelectValue placeholder="Selecione a prioridade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="baixa">Baixa</SelectItem>
-              <SelectItem value="media">Média</SelectItem>
-              <SelectItem value="alta">Alta</SelectItem>
+              {Object.values(TaskPriorities).map(priority => (
+                <SelectItem key={priority} value={priority.toString()}>
+                  {TaskPriorityLabels[priority]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

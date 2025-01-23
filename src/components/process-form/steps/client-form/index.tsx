@@ -11,9 +11,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { BeneficairyQualification, BeneficiaryQualificationLabels } from "@/constants"
+import { useBeneficiary } from "@/hooks/useBeneficiary"
+import { DebounceCombobox } from "@/components/debounce-combo-box"
+import { useAuth } from "@/hooks/useAuth"
+import { useEffect } from "react"
 
 export function ClientForm() {
   const [isNewClient, setIsNewClient] = useState(true)
+  const { getBeneficiariesQuery, changeFilter } = useBeneficiary()
+  const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
+  const [idBeneficiary, setIdBeneficiary] = useState<string | null>(null)
+  const { getSelectedOrganization } = useAuth();
+
+  const handleFetchBeneficiary = async (value: string): Promise<void> => {
+    const idOrganization = getSelectedOrganization()
+    changeFilter({ searchTerm: value, idOrganization })
+  }
+
+  useEffect(() => {
+    setBeneficiaryOptions(getBeneficiariesQuery.data?.beneficiaries.map((beneficiary) => ({
+      value: beneficiary.id.toString(),
+      label: `${beneficiary.name}${beneficiary.phone ? ` - ${beneficiary.phone}` : ''}`
+    })) || [])
+  }, [getBeneficiariesQuery.data])
 
   return (
     <div className="space-y-6">
@@ -58,9 +79,11 @@ export function ClientForm() {
                 <SelectValue placeholder="Selecione a qualificação" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="advogado">Advogado</SelectItem>
-                <SelectItem value="cliente">Cliente</SelectItem>
-                <SelectItem value="parte">Parte</SelectItem>
+                {Object.values(BeneficairyQualification).map(qualification => (
+                  <SelectItem key={qualification} value={qualification.toString()}>
+                    {BeneficiaryQualificationLabels[qualification]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -78,16 +101,18 @@ export function ClientForm() {
             <Label htmlFor="select-client">
               Selecione o Cliente <span className="text-red-500">*</span>
             </Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o cliente" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="client1">Cliente 1</SelectItem>
-                <SelectItem value="client2">Cliente 2</SelectItem>
-                <SelectItem value="client3">Cliente 3</SelectItem>
-              </SelectContent>
-            </Select>
+            <DebounceCombobox
+              id="idClient"
+              fetchOptions={handleFetchBeneficiary}
+              options={beneficiaryOptions}
+              className="w-full"
+              value={idBeneficiary}
+              setValue={setIdBeneficiary}
+              buttonWidth="200px"
+              placeholder="Selecione o cliente"
+              inputPlaceholder="Digite o nome do cliente"
+              emptyMessage="Nenhum cliente encontrado"
+            />
           </div>
 
           <div className="space-y-2">
@@ -99,9 +124,11 @@ export function ClientForm() {
                 <SelectValue placeholder="Selecione a qualificação" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="advogado">Advogado</SelectItem>
-                <SelectItem value="cliente">Cliente</SelectItem>
-                <SelectItem value="parte">Parte</SelectItem>
+                {Object.values(BeneficairyQualification).map(qualification => (
+                  <SelectItem key={qualification} value={qualification.toString()}>
+                    {BeneficiaryQualificationLabels[qualification]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
