@@ -154,6 +154,7 @@ export namespace GetLitigations {
     clientname: string;
     clientphone: string;
     qualification: string;
+    idqualification: number;
     amountprogress: number;
     externalstatusdescription: string;
     externalstatusid: string;

@@ -21,7 +21,7 @@ import { Input } from "../ui/input"
 
 type DebounceComboboxProps = {
     fetchOptions: (inputValue: string) => Promise<void>
-    value: string
+    value: string | null
     setValue: (value: string) => void
     options: { value: string; label: string }[]
     placeholder?: string

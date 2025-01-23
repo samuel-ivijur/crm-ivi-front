@@ -14,6 +14,7 @@ import { useProcessDetails } from "@/hooks/useProcessDetails"
 import { useEffect, useState } from "react"
 import { redirect, useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { ClientTab } from "./client-tab"
 
 export function ProcessDetailsContent() {
   const { toast } = useToast()
@@ -109,6 +110,10 @@ export function ProcessDetailsContent() {
                 
                 <TabsContent value="historico">
                   <HistoryTab />
+                </TabsContent>
+
+                <TabsContent value="cliente">
+                  <ClientTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} invalidateLitigation={invalidateLitigation}/>
                 </TabsContent>
               </div>
             </Tabs>
