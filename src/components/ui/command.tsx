@@ -51,7 +51,6 @@ const CommandInput = React.forwardRef<
     />
   </div>
 ))
-
 CommandInput.displayName = CommandPrimitive.Input.displayName
 
 const CommandList = React.forwardRef<
@@ -64,7 +63,6 @@ const CommandList = React.forwardRef<
     {...props}
   />
 ))
-
 CommandList.displayName = CommandPrimitive.List.displayName
 
 const CommandEmpty = React.forwardRef<
@@ -77,7 +75,6 @@ const CommandEmpty = React.forwardRef<
     {...props}
   />
 ))
-
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName
 
 const CommandGroup = React.forwardRef<

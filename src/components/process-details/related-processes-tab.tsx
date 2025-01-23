@@ -26,6 +26,7 @@ import { useEffect } from "react"
 import PopConfirm from "../popconfirm"
 import { RelatedProcessService } from "@/services/api/related-process"
 import { toast } from "@/hooks/use-toast"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
 
 interface RelatedProcess {
   id: number

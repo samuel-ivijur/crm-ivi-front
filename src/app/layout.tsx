@@ -1,5 +1,8 @@
 import '../styles/globals.css'
 import { Inter } from 'next/font/google'
+import { Sidebar } from '@/components/common/sidebar'
+import { SidebarProvider } from '@/components/common/sidebar/sidebar-context'
+import { MainContent } from '@/components/common/main-content'
 import ReactQueryProvider from '@/utils/react-query'
 import { Toaster } from "@/components/ui/toaster"
 
@@ -17,12 +20,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
-        <ReactQueryProvider>
-          {children}
-          <Toaster />
-        </ReactQueryProvider>
-      </body>
+        <body className={inter.className}>
+          <ReactQueryProvider>
+          <SidebarProvider>
+            <div className="min-h-screen bg-gray-50">
+              <Sidebar />
+              <MainContent>
+                {children}
+                <Toaster />
+              </MainContent>
+            </div>
+          </SidebarProvider>
+          </ReactQueryProvider>
+        </body>
     </html>
   )
 } 

@@ -34,8 +34,9 @@ export interface Deadline {
   name: string
   responsible: string
   date: string
+  time: string
   priority: string
-  status: "Pendente" | "Concluído"
+  status: "Pendente" | "Concluído" | "Cancelado"
 }
 
 export interface RelatedProcess {

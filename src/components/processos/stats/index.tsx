@@ -28,7 +28,7 @@ function StatsCard({ title, total, active, inactive }: StatsCardProps) {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Inativos</span>
+            <span className="text-xs text-muted-foreground">Baixados</span>
             <div className="flex items-center gap-2">
               <span className="text-sm">{inactive}</span>
               <XCircle className="h-3.5 w-3.5 text-red-500" />
@@ -49,4 +49,4 @@ export function ProcessStats() {
       <StatsCard title="Monitoramentos" total={6994} active={6000} inactive={994} />
     </div>
   )
-} 
+}

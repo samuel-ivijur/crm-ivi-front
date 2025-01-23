@@ -28,6 +28,8 @@ import { useCourt } from "@/hooks/useCourt"
 import { DebounceCombobox } from "../debounce-combo-box"
 import { useCounty } from "@/hooks/useCounty"
 import { toast } from "@/hooks/use-toast"
+import { instanciaOptions } from "@/lib/constants/instancia-types"
+import { areaOptions } from "@/lib/constants/area-types"
 
 type FormData = {
   isActive: boolean | null;

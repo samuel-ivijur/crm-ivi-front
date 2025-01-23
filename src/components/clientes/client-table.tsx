@@ -27,30 +27,33 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { format } from "date-fns"
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  ColumnDef,
+  ColumnFiltersState,
+} from "@tanstack/react-table"
+import { Checkbox } from "@/components/ui/checkbox"
+import { LinkProcessModal } from "./link-process-modal"
+import { Client, Process } from "@/types/client"
 
-interface Process {
-  id: string
-  number: string
-  instance: string
-}
-
-interface Client {
-  id: string
-  name: string
-  phone: string
-  date: string
-  status: string
-  communication: string
-  enabled: string
+interface ClientWithProcesses extends Client {
   processes: Process[]
 }
 
-const clients: Client[] = [
+const clients: ClientWithProcesses[] = [
   {
     id: "1",
     name: "John Doe",
+    document: "123.456.789-00",
     phone: "(11) 99999-9999",
-    date: "2024-01-15",
+    email: "john@example.com",
+    date: "2024-01-14",
     status: "Ativo",
     communication: "Ativa",
     enabled: "Aceite",
@@ -62,8 +65,10 @@ const clients: Client[] = [
   {
     id: "2",
     name: "Jane Smith",
+    document: "987.654.321-00",
     phone: "(11) 88888-8888",
-    date: "2024-01-14",
+    email: "jane@example.com",
+    date: "2024-01-13",
     status: "Ativo",
     communication: "Inativa",
     enabled: "Não aceite",
@@ -71,11 +76,153 @@ const clients: Client[] = [
   }
 ]
 
+const columns: ColumnDef<ClientWithProcesses>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "expand",
+    header: "",
+    cell: () => <ChevronDown className="h-4 w-4" />,
+  },
+  {
+    accessorKey: "name",
+    header: "Nome",
+  },
+  {
+    accessorKey: "document",
+    header: "CPF/CNPJ",
+    cell: ({ row }) => {
+      const doc = row.getValue("document") as string
+      // Formata CPF ou CNPJ
+      return doc.length === 11 
+        ? doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+        : doc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5")
+    }
+  },
+  {
+    accessorKey: "phone",
+    header: "Telefone",
+  },
+  {
+    accessorKey: "date",
+    header: "Data Cadastro",
+    cell: ({ row }) => {
+      return format(new Date(row.getValue("date")), "dd/MM/yyyy")
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string
+      return (
+        <Badge variant={status === "Ativo" ? "success" : "destructive"}>
+          {status}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "communication",
+    header: "Comunicação",
+    cell: ({ row }) => {
+      const communication = row.getValue("communication") as string
+      return (
+        <Badge
+          variant={communication === "Ativa" ? "success" : "destructive"}
+        >
+          {communication}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "enabled",
+    header: "Habilitado",
+    cell: ({ row }) => {
+      const enabled = row.getValue("enabled") as string
+      return (
+        <Badge
+          variant={enabled === "Aceite" ? "success" : enabled === "Não aceite" ? "destructive" : "default"}
+        >
+          {enabled}
+        </Badge>
+      )
+    },
+  },
+  {
+    id: "actions",
+    header: "Ações",
+    cell: ({ row }) => {
+      const client = row.original
+      return (
+        <div className="flex justify-end gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Visualizar cliente</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]">
+                <MessageSquarePlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Adicionar comunicação</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]">
+                <Bell className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Adicionar monitoramento</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="hover:text-red-600">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Excluir cliente</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      )
+    },
+  },
+]
+
 export function ClientTable() {
   const router = useRouter()
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [isLinkProcessOpen, setIsLinkProcessOpen] = useState(false)
-  const [selectedClientId, setSelectedClientId] = useState<string>("")
+  const [selectedClient, setSelectedClient] = useState<ClientWithProcesses | null>(null)
 
   const toggleRow = (clientId: string) => {
     const newExpandedRows = new Set(expandedRows)
@@ -87,10 +234,19 @@ export function ClientTable() {
     setExpandedRows(newExpandedRows)
   }
 
-  const openLinkProcessDialog = (clientId: string) => {
-    setSelectedClientId(clientId)
+  const openLinkProcessDialog = (client: ClientWithProcesses) => {
+    setSelectedClient(client)
     setIsLinkProcessOpen(true)
   }
+
+  const table = useReactTable({
+    data: clients,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  })
 
   return (
     <TooltipProvider>
@@ -103,6 +259,7 @@ export function ClientTable() {
               </TableHead>
               <TableHead className="w-4"></TableHead>
               <TableHead>Nome</TableHead>
+              <TableHead>CPF/CNPJ</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Data Cadastro</TableHead>
               <TableHead>Status</TableHead>
@@ -132,40 +289,26 @@ export function ClientTable() {
                     </Button>
                   </TableCell>
                   <TableCell>{client.name}</TableCell>
+                  <TableCell>{client.document}</TableCell>
                   <TableCell>{client.phone}</TableCell>
                   <TableCell>{new Date(client.date).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
-                      className={
-                        client.status === "Ativo"
-                          ? "border-green-500 text-green-500"
-                          : "border-red-500 text-red-500"
-                      }
+                      variant={client.status === "Ativo" ? "success" : "destructive"}
                     >
                       {client.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
-                      className={
-                        client.communication === "Ativa"
-                          ? "border-green-500 text-green-500"
-                          : "border-red-500 text-red-500"
-                      }
+                      variant={client.communication === "Ativa" ? "success" : "destructive"}
                     >
                       {client.communication}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
-                      className={
-                        client.enabled === "Aceite"
-                          ? "border-green-500 text-green-500"
-                          : "border-yellow-500 text-yellow-500"
-                      }
+                      variant={client.enabled === "Aceite" ? "success" : "destructive"}
                     >
                       {client.enabled}
                     </Badge>
@@ -225,7 +368,7 @@ export function ClientTable() {
                             variant="outline"
                             size="sm"
                             className="gap-2"
-                            onClick={() => openLinkProcessDialog(client.id)}
+                            onClick={() => openLinkProcessDialog(client)}
                           >
                             <LinkIcon className="h-4 w-4" />
                             Vincular Processo
@@ -269,43 +412,11 @@ export function ClientTable() {
         </Table>
       </div>
 
-      <Dialog open={isLinkProcessOpen} onOpenChange={setIsLinkProcessOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Vincular Processo</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Processo Existente</Label>
-              <div className="flex gap-2">
-                <Input placeholder="Digite o número do processo" />
-                <Button>Buscar</Button>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
-                  ou
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setIsLinkProcessOpen(false)
-                // Here you would open your process creation modal
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Cadastrar Novo Processo
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LinkProcessModal 
+        open={isLinkProcessOpen}
+        onOpenChange={setIsLinkProcessOpen}
+        client={selectedClient}
+      />
     </TooltipProvider>
   )
 } 
