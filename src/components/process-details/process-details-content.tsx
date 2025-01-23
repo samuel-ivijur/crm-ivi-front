@@ -100,11 +100,11 @@ export function ProcessDetailsContent() {
                 </TabsContent>
                 
                 <TabsContent value="prazos">
-                  <DeadlinesTab />
+                  <DeadlinesTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} invalidateLitigation={invalidateLitigation}/>
                 </TabsContent>
                 
                 <TabsContent value="relacionados">
-                  <RelatedProcessesTab />
+                  <RelatedProcessesTab data={getLitigationQuery.data || null} isLoading={getLitigationQuery.isFetching} invalidateLitigation={invalidateLitigation} />
                 </TabsContent>
                 
                 <TabsContent value="historico">

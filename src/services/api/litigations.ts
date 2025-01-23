@@ -1,5 +1,6 @@
 import { API_URL } from '@/config/api'
 import { LitigationStatus } from '@/constants';
+import { Task } from '@/types/tasks';
 import { authCookies } from '@/utils/auth-cookies';
 
 const headers = {
@@ -163,20 +164,8 @@ export namespace GetLitigations {
     iduf: number;
     uf: string;
     adverseParties: AdverseParty[]
-    tasks: {
-      id: number;
-      title: string;
-      deadline: string;
-      createdat: string;
-      status: {
-        id: number;
-        description: string;
-      };
-      priority: {
-        id: number;
-        description: string;
-      };
-    }[]
+    tasks: Task[]
+    idRelatedProcessesGroup: number;
     case_cover: {
       id?: number,
       distribution_type?: string,

@@ -15,11 +15,11 @@ export const TaskPriorityLabels = {
 }
 
 export const TaskPriorityColors = {
-    [TaskPriorities.Urgent]: '#9333EA',
-    [TaskPriorities.High]: '#4F46E5',
-    [TaskPriorities.Medium]: '#A5B4FC',
-    [TaskPriorities.Low]: '#E5E7EB',
-    [TaskPriorities.WithoutPriority]: '#6B7280'
+    [TaskPriorities.Urgent]: '#EF4444', // Tailwind red-500
+    [TaskPriorities.High]: '#F97316', // Tailwind orange-500
+    [TaskPriorities.Medium]: '#F59E0B', // Tailwind yellow-500
+    [TaskPriorities.Low]: '#10B981', // Tailwind green-500
+    [TaskPriorities.WithoutPriority]: '#6B7280' // Tailwind gray-500
 }
 
 export const TaskStatus = {
@@ -36,4 +36,12 @@ export const TaskStatusLabels = {
     [TaskStatus.COMPLETED]: 'Concluída',
     [TaskStatus.LATE]: 'Atrasada',
     [TaskStatus.CANCELLED]: 'Cancelada',
+}
+
+export const TaskStatusColors = {
+    [TaskStatus.PENDING]: '#F59E0B', // Tailwind yellow-500
+    [TaskStatus.IN_PROGRESS]: '#3B82F6', // Tailwind blue-500
+    [TaskStatus.COMPLETED]: '#10B981', // Tailwind green-500
+    [TaskStatus.LATE]: '#FBBF24', // Tailwind yellow-400
+    [TaskStatus.CANCELLED]: '#EF4444', // Tailwind red-500
 }
