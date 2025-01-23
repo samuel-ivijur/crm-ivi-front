@@ -44,9 +44,55 @@ function StatsCard({ title, total, active, inactive }: StatsCardProps) {
 
 export function ClientStats() {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <StatsCard title="Total de Clientes" total={150} active={120} inactive={30} />
-      <StatsCard title="Comunicações" total={150} active={100} inactive={50} />
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+          <Badge variant="outline" className="text-[#0146cf]">150</Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Ativos</span>
+              <div className="flex items-center gap-2">
+                <span>120</span>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Inativos</span>
+              <div className="flex items-center gap-2">
+                <span>30</span>
+                <XCircle className="h-4 w-4 text-red-500" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Comunicações</CardTitle>
+          <Badge variant="outline" className="text-[#0146cf]">150</Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Ativos</span>
+              <div className="flex items-center gap-2">
+                <span>100</span>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Inativos</span>
+              <div className="flex items-center gap-2">
+                <span>50</span>
+                <XCircle className="h-4 w-4 text-red-500" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Habilitados</CardTitle>
@@ -71,6 +117,6 @@ export function ClientStats() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   )
 } 

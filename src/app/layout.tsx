@@ -1,5 +1,8 @@
 import '../styles/globals.css'
 import { Inter } from 'next/font/google'
+import { Sidebar } from '@/components/common/sidebar'
+import { SidebarProvider } from '@/components/common/sidebar/sidebar-context'
+import { MainContent } from '@/components/common/main-content'
 import ReactQueryProvider from '@/utils/react-query'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,7 +21,12 @@ export default function RootLayout({
     <html lang="pt-BR">
       <ReactQueryProvider>
         <body className={inter.className}>
-          {children}
+          <SidebarProvider>
+            <div className="min-h-screen bg-gray-50">
+              <Sidebar />
+              <MainContent>{children}</MainContent>
+            </div>
+          </SidebarProvider>
         </body>
       </ReactQueryProvider>
     </html>

@@ -1,23 +1,18 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/utils/cn"
-import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Menu, ChevronLeft, ChevronRight, ChevronDown, LayoutDashboard, Users, GavelIcon, MessagesSquare, UserCheck, PhoneCall } from "lucide-react"
-import { SidebarProvider, useSidebar } from "./sidebar-context"
+import { Menu, ChevronDown, LayoutDashboard, Users, GavelIcon, MessagesSquare, UserCheck, HelpCircle } from "lucide-react"
+import { BsWhatsapp } from 'react-icons/bs'
+import { useSidebar } from "./sidebar-context"
+import { Logo } from "./logo"
 
-// Importação dinâmica dos ícones
-const Home = dynamic(() => import('lucide-react').then(mod => mod.Home))
-const Files = dynamic(() => import('lucide-react').then(mod => mod.Files))
-const HeadphonesIcon = dynamic(() => import('lucide-react').then(mod => mod.Headphones))
-const UsersIcon = dynamic(() => import('lucide-react').then(mod => mod.Users))
-
-const menuItems = [
+const sidebarItems = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
@@ -25,7 +20,7 @@ const menuItems = [
   },
   {
     title: "Clientes",
-    icon: UsersIcon,
+    icon: Users,
     href: "/clientes",
   },
   {
@@ -36,19 +31,24 @@ const menuItems = [
   {
     title: "Comunicação",
     icon: MessagesSquare,
-    subitems: [
+    items: [
+      {
+        title: "Atendimentos",
+        icon: BsWhatsapp,
+        href: "/comunicacao/atendimentos",
+      },
       {
         title: "Habilitados",
         icon: UserCheck,
         href: "/comunicacao/habilitados",
       },
-      {
-        title: "Atendimentos",
-        icon: PhoneCall,
-        href: "/comunicacao/atendimentos",
-      },
     ],
   },
+  {
+    title: "Ajuda",
+    icon: HelpCircle,
+    href: "/faq",
+  }
 ]
 
 function SidebarContent() {
@@ -60,87 +60,90 @@ function SidebarContent() {
 
   return (
     <div 
-      className="flex h-full flex-col"
+      className="flex h-full flex-col bg-[#225BE4]"
       onMouseEnter={() => setIsCollapsed(false)}
-      onMouseLeave={() => setIsCollapsed(true)}
+      onMouseLeave={() => {
+        setIsCollapsed(true)
+        setIsCommunicationOpen(false)
+      }}
     >
-      <SidebarHeader />
-      <ScrollArea className="flex-1">
-        <div className="space-y-2 p-2">
-          {menuItems.map((item) => (
-            <div key={item.title}>
-              {item.subitems ? (
-                // Item com subitens (Comunicação)
-                <div>
-                  <button
-                    onClick={() => setIsCommunicationOpen(!isCommunicationOpen)}
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-lg p-2 hover:bg-gray-100",
-                      pathname.startsWith("/comunicacao") && "bg-gray-100"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {!isCollapsed && (
-                      <>
-                        <span className="flex-1 text-left">{item.title}</span>
-                        {isCommunicationOpen ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </>
-                    )}
-                  </button>
-                  {isCommunicationOpen && !isCollapsed && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {item.subitems.map((subitem) => (
-                        <Link
-                          key={subitem.href}
-                          href={subitem.href}
-                          className={cn(
-                            "flex items-center gap-2 rounded-lg p-2 hover:bg-gray-100",
-                            pathname === subitem.href && "bg-gray-100"
-                          )}
-                        >
-                          <subitem.icon className="h-5 w-5" />
-                          <span>{subitem.title}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // Itens normais (Dashboard, Clientes, Processos)
-                <Link
-                  href={item.href}
+      {/* Logo Container */}
+      <div className={cn(
+        "sticky top-0 z-10 border-b border-white/10",
+        "flex items-center justify-center",
+        isCollapsed ? "p-3" : "p-4"
+      )}>
+        <Logo className={cn(
+          "transition-all duration-300",
+          isCollapsed ? "h-8 w-8" : "h-10 w-auto"
+        )} />
+      </div>
+
+      {/* Menu Items */}
+      <ScrollArea className="flex-1 py-3 px-3">
+        {sidebarItems.map((item) => (
+          <div key={item.title} className="mb-1">
+            {item.items ? (
+              <>
+                <button
+                  onClick={() => setIsCommunicationOpen(!isCommunicationOpen)}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg p-2 hover:bg-gray-100",
-                    pathname === item.href && "bg-gray-100"
+                    "flex w-full items-center justify-between rounded-lg p-2",
+                    "text-white hover:bg-white/10",
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                  {!isCollapsed && <span>{item.title}</span>}
-                </Link>
-              )}
-            </div>
-          ))}
-        </div>
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-5 w-5" />
+                    {!isCollapsed && <span>{item.title}</span>}
+                  </div>
+                  {!isCollapsed && (
+                    <ChevronDown className="h-4 w-4 transition-transform" />
+                  )}
+                </button>
+
+                {isCommunicationOpen && !isCollapsed && (
+                  <div className="ml-3 mt-1 space-y-1">
+                    {item.items.map((subitem) => (
+                      <Link
+                        key={subitem.href}
+                        href={subitem.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg p-2",
+                          isActive(subitem.href)
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <subitem.icon className="h-5 w-5" />
+                        <span>{subitem.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg p-2",
+                  isActive(item.href)
+                    ? "bg-white/20 text-white"
+                    : "text-white/80 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {!isCollapsed && <span>{item.title}</span>}
+              </Link>
+            )}
+          </div>
+        ))}
       </ScrollArea>
     </div>
   )
 }
 
-function SidebarHeader() {
-  const { isCollapsed } = useSidebar()
-  
-  return (
-    <div className="sticky top-0 z-10 bg-white px-4 py-3 border-b">
-      {!isCollapsed && <span className="text-xl font-bold">IVI LAW</span>}
-    </div>
-  )
-}
-
 export function Sidebar() {
+  const { isCollapsed } = useSidebar()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -148,18 +151,8 @@ export function Sidebar() {
   }, [])
 
   if (!mounted) {
-    return <div className="w-16 border-r" />
+    return null
   }
-
-  return (
-    <SidebarProvider>
-      <SidebarRoot />
-    </SidebarProvider>
-  )
-}
-
-function SidebarRoot() {
-  const { isCollapsed } = useSidebar()
 
   return (
     <>
@@ -176,22 +169,23 @@ function SidebarRoot() {
         </SheetTrigger>
         <SheetContent 
           side="left" 
-          className="w-[240px] p-0"
+          className="w-[240px] p-0 lg:hidden"
         >
           <SidebarContent />
         </SheetContent>
       </Sheet>
 
       {/* Versão Desktop */}
-      <div
+      <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 bg-white hidden lg:block border-r",
-          "transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-40 hidden lg:block",
+          "bg-[#225BE4] border-r border-white/10",
+          "transition-[width] duration-300 ease-in-out",
           isCollapsed ? "w-16" : "w-64"
         )}
       >
         <SidebarContent />
-      </div>
+      </aside>
     </>
   )
 } 

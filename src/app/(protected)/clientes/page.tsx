@@ -11,16 +11,17 @@ export default function ClientesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Lista de Clientes</h1>
-        <div className="flex gap-4">
+        <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Importar Planilha
           </Button>
           <Button 
-            className="gap-2 bg-[#0146cf] hover:bg-[#0146cf]/90 transition-transform hover:scale-105"
+            className="gap-2 bg-[#0146cf] hover:bg-[#0146cf]/90"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -28,17 +29,26 @@ export default function ClientesPage() {
           </Button>
         </div>
       </div>
-      <ClientStats />
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <ClientStats />
+      </div>
+
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-4 border-b flex items-center justify-between">
           <h2 className="text-lg font-semibold">Lista de Clientes</h2>
           <Button variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Exportar
           </Button>
         </div>
-        <ClientTable />
+        <div className="p-4">
+          <ClientTable />
+        </div>
       </div>
+
       <ClientFormModal 
         open={isModalOpen}
         onOpenChange={setIsModalOpen}

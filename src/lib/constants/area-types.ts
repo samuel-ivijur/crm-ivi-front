@@ -22,6 +22,6 @@ export const areaOptions = [
   { value: "desportivo", label: "DESPORTIVO" },
   { value: "notarial", label: "NOTARIAL/REGISTRAL" },
   { value: "sindical", label: "SINDICAL" }
-] as const
+]
 
-export type Area = typeof areaOptions[number]["value"] 
+export type Area = (typeof areaOptions)[number]["value"] 

@@ -1,73 +1,53 @@
 "use client"
 
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Plus } from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { instanciaOptions } from "@/lib/constants/instancia-types"
+import { Switch } from "@/components/ui/switch"
+import { ProcessDataForm } from "@/components/process-form/steps/process-data-form/index"
 
 export function ClientProcessForm() {
+  const [isNewProcess, setIsNewProcess] = useState(false)
+
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <Label>Processo Existente</Label>
-        <div className="flex gap-2">
-          <Input placeholder="Digite o número do processo" />
-          <Button>Buscar</Button>
+      <div className="flex items-center justify-between">
+        <Label className="text-base">Vincular Processo</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="new-process" className="text-sm text-muted-foreground">
+            {isNewProcess ? 'Cadastrar novo' : 'Buscar existente'}
+          </Label>
+          <Switch
+            id="new-process"
+            checked={isNewProcess}
+            onCheckedChange={setIsNewProcess}
+            className="data-[state=checked]:bg-[#0146cf]"
+          />
         </div>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-muted-foreground">
-            ou cadastre um novo processo
-          </span>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="process-number">
-              Nº Processo <span className="text-red-500">*</span>
-            </Label>
-            <Input id="process-number" placeholder="Digite o número do processo" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="instance">
-              Instância <span className="text-red-500">*</span>
-            </Label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a instância" />
-              </SelectTrigger>
-              <SelectContent>
-                {instanciaOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {!isNewProcess ? (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input 
+              placeholder="Digite o número do processo" 
+              className="flex-1"
+            />
+            <Button className="bg-[#0146cf] hover:bg-[#0146cf]/90">
+              Buscar
+            </Button>
           </div>
         </div>
+      ) : (
+        <ProcessDataForm />
+      )}
 
-        <Button variant="outline" className="w-full">
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Processo
-        </Button>
-      </div>
+      <Button variant="outline" className="w-full">
+        <Plus className="mr-2 h-4 w-4" />
+        Adicionar Processo
+      </Button>
     </div>
   )
 } 
