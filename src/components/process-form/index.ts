@@ -1,3 +1,3 @@
-export * from './process-form-modal/index'
+export * from './process-form-modal'
 export * from './process-form-stepper'
 export * from './steps' 

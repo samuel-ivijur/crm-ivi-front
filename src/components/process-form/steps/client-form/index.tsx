@@ -1,12 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -14,58 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { BeneficairyQualification, BeneficiaryQualificationLabels } from "@/constants"
+import { UF } from "@/constants"
 import { useBeneficiary } from "@/hooks/useBeneficiary"
 import { DebounceCombobox } from "@/components/debounce-combo-box"
 import { useAuth } from "@/hooks/useAuth"
 import { useEffect } from "react"
 import { Switch } from "@/components/ui/switch"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { tiposParteOptions } from "@/lib/constants/parte-types"
+import CustomMaskedInput from "@/components/MaskedInput"
+import { useProcessForm } from "@/context/useProcessModalForm"
 
-interface Client {
-  id: number
-  name: string
-  email: string
-  phone: string
-}
-
-// Simulação de dados de clientes
-const mockClients: Client[] = [
-  { id: 1, name: "João Silva", email: "joao@email.com", phone: "(11) 99999-9999" },
-  { id: 2, name: "Maria Santos", email: "maria@email.com", phone: "(11) 88888-8888" },
-  { id: 3, name: "Pedro Oliveira", email: "pedro@email.com", phone: "(11) 77777-7777" },
-]
-
-// Função para formatar telefone
-const formatPhone = (value: string) => {
-  const numbers = value.replace(/\D/g, '')
-  if (numbers.length <= 11) {
-    return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-  }
-  return value
-}
-
-// Função para formatar CEP
-const formatCEP = (value: string) => {
-  const numbers = value.replace(/\D/g, '')
-  return numbers.replace(/(\d{5})(\d{3})/, '$1-$2')
-}
-
-// Função para formatar data
 const formatDate = (value: string) => {
   const numbers = value.replace(/\D/g, '')
   return numbers.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3')
@@ -78,41 +35,14 @@ interface AddressData {
   uf: string
 }
 
-// Simulação de busca de clientes
-const searchClients = async (searchTerm: string) => {
-  // Aqui você implementaria a chamada real à API
-  return mockClients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.phone.includes(searchTerm)
-  )
-}
-
 export function ClientForm() {
+  const { formData, updateFormData, errors, steps, currentStep } = useProcessForm()
   const { getBeneficiariesQuery, changeFilter } = useBeneficiary()
   const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
-  const [idBeneficiary, setIdBeneficiary] = useState<string | null>(null)
   const { getSelectedOrganization } = useAuth();
 
-  const handleFetchBeneficiary = async (value: string): Promise<void> => {
-    const idOrganization = getSelectedOrganization()
-    changeFilter({ searchTerm: value, idOrganization })
-  }
-
-  useEffect(() => {
-    setBeneficiaryOptions(getBeneficiariesQuery.data?.beneficiaries.map((beneficiary) => ({
-      value: beneficiary.id.toString(),
-      label: `${beneficiary.name}${beneficiary.phone ? ` - ${beneficiary.phone}` : ''}`
-    })) || [])
-  }, [getBeneficiariesQuery.data])
-
-  const [useExistingClient, setUseExistingClient] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [openClientSearch, setOpenClientSearch] = useState(false)
   const [birthDate, setBirthDate] = useState('')
 
-  // Estados para controlar os valores com máscara
-  const [phone, setPhone] = useState('')
   const [cep, setCep] = useState('')
 
   const [address, setAddress] = useState({
@@ -123,28 +53,6 @@ export function ClientForm() {
   })
   const [isLoadingCep, setIsLoadingCep] = useState(false)
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<Client[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value
-    value = value.replace(/\D/g, '')
-    if (value.length <= 11) {
-      value = formatPhone(value)
-    }
-    setPhone(value)
-  }
-
-  const handleCEPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value
-    value = value.replace(/\D/g, '')
-    if (value.length <= 8) {
-      value = formatCEP(value)
-    }
-    setCep(value)
-  }
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value
     value = value.replace(/\D/g, '')
@@ -152,6 +60,11 @@ export function ClientForm() {
       value = formatDate(value)
     }
     setBirthDate(value)
+  }
+
+  const handleFetchBeneficiary = async (value: string): Promise<void> => {
+    const idOrganization = getSelectedOrganization()
+    changeFilter({ searchTerm: value, idOrganization })
   }
 
   const fetchAddress = async () => {
@@ -164,6 +77,7 @@ export function ClientForm() {
       const data: AddressData = await response.json()
 
       if (data.logradouro) {
+        console.log({ data })
         setAddress({
           street: data.logradouro,
           neighborhood: data.bairro,
@@ -178,23 +92,12 @@ export function ClientForm() {
     }
   }
 
-  const handleSearch = async (value: string) => {
-    setSearchTerm(value)
-    if (!value) {
-      setSearchResults([])
-      return
-    }
-
-    setIsSearching(true)
-    try {
-      const results = await searchClients(value)
-      setSearchResults(results)
-    } catch (error) {
-      console.error('Erro ao buscar clientes:', error)
-    } finally {
-      setIsSearching(false)
-    }
-  }
+  useEffect(() => {
+    setBeneficiaryOptions(getBeneficiariesQuery.data?.beneficiaries.map((beneficiary) => ({
+      value: beneficiary.id.toString(),
+      label: `${beneficiary.name}${beneficiary.phone ? ` - ${beneficiary.phone}` : ''}`
+    })) || [])
+  }, [getBeneficiariesQuery.data])
 
   return (
     <div className="space-y-6">
@@ -206,20 +109,16 @@ export function ClientForm() {
           </Label>
           <Switch
             id="use-existing"
-            checked={useExistingClient}
+            checked={formData.selectClient}
             onCheckedChange={(checked) => {
-              setUseExistingClient(checked)
-              if (!checked) {
-                setSelectedClient(null)
-                setSearchTerm("")
-              }
+              updateFormData("selectClient", checked)
             }}
           />
         </div>
       </div>
 
       <div className="rounded-lg border p-4 bg-white space-y-6">
-        {useExistingClient ? (
+        {formData.selectClient ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="select-client">
@@ -229,35 +128,48 @@ export function ClientForm() {
                 id="idClient"
                 fetchOptions={handleFetchBeneficiary}
                 options={beneficiaryOptions}
-                className="w-full"
-                value={idBeneficiary}
-                setValue={setIdBeneficiary}
+                className={cn(
+                  "w-full",
+                  errors.idClient && "border-red-500"
+                )}
+                value={formData.idClient ? formData.idClient : null}
+                setValue={(value) => updateFormData("idClient", value)}
                 buttonWidth="200px"
                 placeholder="Selecione o cliente"
                 inputPlaceholder="Digite o nome do cliente"
                 emptyMessage="Nenhum cliente encontrado"
               />
+              {errors.idClient && <p className="text-red-500 text-sm">{errors.idClient}</p>}
             </div>
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="qualification" className="font-medium">
                   Qualificação do cliente <span className="text-red-500">*</span>
                 </Label>
-                <Select name="qualification" required>
-                  <SelectTrigger className="transition-colors focus:border-[#0146cf]">
+                <Select 
+                  name="qualification" 
+                  value={formData.client?.idQualification ? formData.client.idQualification.toString() : ''}
+                  onValueChange={(value) => updateFormData("client", { ...formData.client, idQualification: Number(value) })}
+                  required 
+                >
+                  <SelectTrigger className={cn(
+                    "transition-colors focus:border-[#0146cf]",
+                    errors.idClient && "border-red-500"
+                  )}>
                     <SelectValue placeholder="Selecione a qualificação" />
                   </SelectTrigger>
                   <SelectContent>
                     {tiposParteOptions.map((tipo) => (
                       <SelectItem
                         key={tipo.value}
-                        value={tipo.value}
+                        value={tipo.value.toString()}
                       >
                         {tipo.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.idClient && <p className="text-red-500 text-sm">{errors.idClient}</p>}
               </div>
 
               <div className="space-y-2">
@@ -268,6 +180,8 @@ export function ClientForm() {
                   id="identification"
                   placeholder="Escritório/Nome"
                   className="transition-colors focus:border-[#0146cf]"
+                  value={formData.nick}
+                  onChange={(e) => updateFormData("nick", e.target.value)}
                 />
               </div>
             </div>
@@ -282,51 +196,75 @@ export function ClientForm() {
                 <Input
                   id="name"
                   placeholder="Digite o nome"
-                  className="transition-colors focus:border-[#0146cf]"
+                  className={cn(
+                    "transition-colors focus:border-[#0146cf]",
+                    errors.name && "border-red-500"
+                  )}
+                  value={formData.client?.name}
+                  onChange={(e) => updateFormData("client", { ...formData.client, name: e.target.value })}
                   required
                 />
+                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone" className="font-medium">
                   Celular <span className="text-red-500">*</span>
                 </Label>
-                <Input
+                <CustomMaskedInput
                   id="phone"
-                  value={phone}
-                  onChange={handlePhoneChange}
+                  value={formData.client?.phone}
+                  onChange={(e) => updateFormData("client", { ...formData.client, phone: e.target.value })}
                   placeholder="(00) 00000-0000"
-                  className="transition-colors focus:border-[#0146cf]"
-                  maxLength={15}
+                  className={cn(
+                    "transition-colors focus:border-[#0146cf]",
+                    errors.phone && "border-red-500"
+                  )}
                   required
+                  mask="(11) 11111-1111"
                 />
+                {errors.phone && <p className="text-red-500 text-sm">{errors.phone}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="qualification" className="font-medium">
                   Qualificação do cliente <span className="text-red-500">*</span>
                 </Label>
-                <Select name="qualification" required>
-                  <SelectTrigger className="transition-colors focus:border-[#0146cf]">
+                <Select 
+                  name="qualification" 
+                  value={formData.client?.idQualification ? formData.client.idQualification.toString() : ''} 
+                  onValueChange={(value) => updateFormData("client", { ...formData.client, idQualification: Number(value) })}
+                  required 
+                >
+                  <SelectTrigger className={cn(
+                    "transition-colors focus:border-[#0146cf]",
+                    errors.idQualification && "border-red-500"
+                  )}>
                     <SelectValue placeholder="Selecione a qualificação" />
                   </SelectTrigger>
                   <SelectContent>
                     {tiposParteOptions.map((tipo) => (
                       <SelectItem
                         key={tipo.value}
-                        value={tipo.value}
+                        value={tipo.value.toString()}
                       >
                         {tipo.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.idQualification && <p className="text-red-500 text-sm">{errors.idQualification}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="identification">
                   Como você quer ser identificado pelo cliente?
                 </Label>
-                <Input id="identification" placeholder="Escritório/Nome" />
+                <Input 
+                  id="identification" 
+                  placeholder="Escritório/Nome" 
+                  value={formData.nick}
+                  onChange={(e) => updateFormData("nick", e.target.value)}
+                />
               </div>
             </div>
             <div className="grid gap-6 md:grid-cols-2">
@@ -367,20 +305,21 @@ export function ClientForm() {
                 <div className="relative">
                   <Label htmlFor="cep" className="font-medium">CEP</Label>
                   <div className="relative">
-                    <Input
+                    <CustomMaskedInput
                       id="cep"
                       value={cep}
-                      onChange={handleCEPChange}
+                      onChange={(e) => setCep(e.target.value)}
                       placeholder="00000-000"
                       className="pr-8 transition-colors focus:border-[#0146cf]"
-                      maxLength={9}
+                      mask="11111-111"
+                      onBlur={fetchAddress}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={fetchAddress}
-                      disabled={cep.length < 9 || isLoadingCep}
+                      disabled={String(cep).replace(/\D/g, '').length < 8 || isLoadingCep}
                       className="absolute right-0 top-0 h-full px-2 hover:bg-transparent hover:text-[#0146cf] disabled:opacity-50"
                     >
                       <Search className={cn(
@@ -448,33 +387,14 @@ export function ClientForm() {
                     <SelectValue placeholder="Selecione o estado" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="AC">Acre</SelectItem>
-                    <SelectItem value="AL">Alagoas</SelectItem>
-                    <SelectItem value="AP">Amapá</SelectItem>
-                    <SelectItem value="AM">Amazonas</SelectItem>
-                    <SelectItem value="BA">Bahia</SelectItem>
-                    <SelectItem value="CE">Ceará</SelectItem>
-                    <SelectItem value="DF">Distrito Federal</SelectItem>
-                    <SelectItem value="ES">Espírito Santo</SelectItem>
-                    <SelectItem value="GO">Goiás</SelectItem>
-                    <SelectItem value="MA">Maranhão</SelectItem>
-                    <SelectItem value="MT">Mato Grosso</SelectItem>
-                    <SelectItem value="MS">Mato Grosso do Sul</SelectItem>
-                    <SelectItem value="MG">Minas Gerais</SelectItem>
-                    <SelectItem value="PA">Pará</SelectItem>
-                    <SelectItem value="PB">Paraíba</SelectItem>
-                    <SelectItem value="PR">Paraná</SelectItem>
-                    <SelectItem value="PE">Pernambuco</SelectItem>
-                    <SelectItem value="PI">Piauí</SelectItem>
-                    <SelectItem value="RJ">Rio de Janeiro</SelectItem>
-                    <SelectItem value="RN">Rio Grande do Norte</SelectItem>
-                    <SelectItem value="RS">Rio Grande do Sul</SelectItem>
-                    <SelectItem value="RO">Rondônia</SelectItem>
-                    <SelectItem value="RR">Roraima</SelectItem>
-                    <SelectItem value="SC">Santa Catarina</SelectItem>
-                    <SelectItem value="SP">São Paulo</SelectItem>
-                    <SelectItem value="SE">Sergipe</SelectItem>
-                    <SelectItem value="TO">Tocantins</SelectItem>
+                    {UF.map((uf) => (
+                      <SelectItem
+                        key={uf.id}
+                        value={uf.uf}
+                      >
+                        {uf.uf}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

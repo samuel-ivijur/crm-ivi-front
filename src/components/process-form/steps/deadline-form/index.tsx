@@ -55,16 +55,6 @@ export function DeadlineForm() {
     setDeadlines(deadlines.filter(deadline => deadline.id !== id))
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'baixa': return 'text-green-600'
-      case 'media': return 'text-yellow-600'
-      case 'alta': return 'text-orange-600'
-      case 'urgente': return 'text-red-600'
-      default: return 'text-gray-600'
-    }
-  }
-
   const formatDateTime = (date: string, time: string) => {
     if (!date) return ""
     const dateObj = new Date(`${date}T${time || '00:00'}`)

@@ -14,21 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Deadline } from "@/types/process"
-import { TaskPriorities, TaskPriorityLabels } from "@/constants"
+import { TaskPriorities, TaskPriorityColors, TaskPriorityLabels, TaskStatus, TaskStatusLabels } from "@/constants"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { useProcessForm } from "@/context/useProcessModalForm"
+import { LitigationParamsTask } from "@/services/api/litigations"
 
-// Constantes para prioridades com cores
-const priorities = [
-  { value: "baixa", label: "Baixa", color: "text-green-600" },
-  { value: "normal", label: "Normal", color: "text-yellow-600" },
-  { value: "alta", label: "Alta", color: "text-orange-600" },
-  { value: "urgente", label: "Urgente", color: "text-red-600" }
-] as const
+type Task = LitigationParamsTask & { id: number }
 
 export function DeadlinesForm() {
-  const [deadlines, setDeadlines] = useState<Deadline[]>([])
+  const { formData, updateFormData, errors, steps, currentStep } = useProcessForm()
+  const [deadlines, setDeadlines] = useState<Task[]>(
+    formData?.tasks?.map((task, index) => ({ ...task, id: index + 1 })) || []
+  )
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [selectedTime, setSelectedTime] = useState("08:00")
 
@@ -37,23 +35,24 @@ export function DeadlinesForm() {
     const formData = new FormData(e.currentTarget)
     if (!selectedDate) return
 
-    const newDeadline = {
+    const newDeadline: Task = {
       id: deadlines.length + 1,
-      name: formData.get("name") as string,
-      responsible: formData.get("responsible") as string,
-      date: format(selectedDate, "yyyy-MM-dd"),
-      time: selectedTime,
-      priority: formData.get("priority") as string,
-      status: "Pendente" as const,
+      title: formData.get("name") as string,
+      deadline: format(selectedDate, "yyyy-MM-dd") + "T" + selectedTime,
+      idResponsible: formData.get("responsible") as string,
+      idPriority: formData.get("priority") ? parseInt(formData.get("priority") as string) : TaskPriorities.WithoutPriority,
     }
     setDeadlines([...deadlines, newDeadline])
+    updateFormData("tasks", [...deadlines, newDeadline])
     e.currentTarget.reset()
     setSelectedDate(undefined)
     setSelectedTime("08:00")
   }
 
   const removeDeadline = (id: number) => {
-    setDeadlines(deadlines.filter((deadline) => deadline.id !== id))
+    const newDeadlines = deadlines.filter((deadline) => deadline.id !== id)
+    updateFormData("tasks", newDeadlines)
+    setDeadlines(newDeadlines)
   }
 
   return (
@@ -164,22 +163,19 @@ export function DeadlinesForm() {
             <tbody>
               {deadlines.map((deadline) => (
                 <tr key={deadline.id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4">{deadline.name}</td>
-                  <td className="py-3 px-4">{deadline.responsible}</td>
+                  <td className="py-3 px-4">{deadline.title}</td>
+                  <td className="py-3 px-4">{deadline.idResponsible}</td>
                   <td className="py-3 px-4">
-                    {format(new Date(`${deadline.date}T${deadline.time}`), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    {format(new Date(deadline.deadline), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                   </td>
                   <td className="py-3 px-4">
-                    <span className={priorities.find(p => p.value === deadline.priority)?.color}>
-                      {priorities.find(p => p.value === deadline.priority)?.label}
+                    <span style={{ color: TaskPriorityColors[deadline.idPriority] }}>
+                      {TaskPriorityLabels[deadline.idPriority]}
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={
-                      deadline.status === "Pendente" ? "text-yellow-600" :
-                        deadline.status === "Concluído" ? "text-green-600" : "text-red-600"
-                    }>
-                      {deadline.status}
+                    <span className={"text-yellow-600"}>
+                      Pendente
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">

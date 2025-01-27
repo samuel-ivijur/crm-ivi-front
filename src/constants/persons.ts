@@ -12,8 +12,8 @@ export enum AdversePartyType {
 }
 
 export const personTypeOptions = [
-  { value: PersonType.PERSON, label: 'Física' },
-  { value: PersonType.COMPANY, label: 'Jurídica' },
+  { value: PersonType.PERSON, label: 'Pessoa Física' },
+  { value: PersonType.COMPANY, label: 'Pessoa Jurídica' },
 ] 
 
 export const adversePartyTypeOptions = [

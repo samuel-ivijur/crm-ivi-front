@@ -24,7 +24,7 @@ export function ProcessoForm({ ...props }: ProcessoFormProps) {
         </SelectTrigger>
         <SelectContent>
           {tiposParteOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem key={option.value} value={String(option.value)}>
               {option.label}
             </SelectItem>
           ))}

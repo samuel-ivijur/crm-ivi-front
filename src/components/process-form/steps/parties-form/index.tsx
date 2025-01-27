@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -13,47 +13,77 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { tiposParteOptions } from "@/lib/constants/parte-types"
-
-interface Party {
-  id: string
-  name: string
-  document: string
-  personType: string
-  partyType: string
-}
+import { useProcessForm } from "@/context/useProcessModalForm"
+import { AdversyParty } from "@/types/adversy-party"
+import { adversePartyTypeOptions, PersonType, personTypeOptions } from "@/constants"
+import CustomMaskedInput from "@/components/MaskedInput"
+import { toast } from "@/hooks/use-toast"
 
 export function PartiesForm() {
-  const [parties, setParties] = useState<Party[]>([
-    { id: '1', name: '', document: '', personType: '', partyType: '' }
-  ])
+  const { formData, updateFormData, errors, steps, currentStep } = useProcessForm()
+  const [parties, setParties] = useState<Omit<AdversyParty, 'id'>[]>(formData?.adverseParty || [])
+  const validate = steps.find(step => step.id === currentStep)!.validate
 
   const addParty = () => {
+    if (!validate()) {
+      toast({
+        title: 'Preencha os campos obrigatórios',
+        variant: 'destructive'
+      })
+      return
+    }
+
     setParties([
       ...parties,
-      { id: String(parties.length + 1), name: '', document: '', personType: '', partyType: '' }
+      { name: '', document: '', idPersonType: 0, idType: 0 }
     ])
   }
 
-  const removeParty = (id: string) => {
-    if (parties.length === 1) return
-    setParties(parties.filter(party => party.id !== id))
+  const removeParty = (index: number) => {
+    const newParties = [...parties]
+    newParties.splice(index, 1)
+    setParties(newParties)
   }
 
-  const handlePersonTypeChange = (id: string, value: string) => {
-    setParties(parties.map(party => {
-      if (party.id === id) {
-        return { ...party, personType: value, document: '' }
-      }
-      return party
-    }))
+  const handlePersonTypeChange = (index: number, value: string) => {
+    const newParties = [...parties]
+    newParties[index].idPersonType = parseInt(value)
+    setParties(newParties)
   }
+
+  const handleAdversePartyTypeChange = (index: number, value: string) => {
+    const newParties = [...parties]
+    newParties[index].idType = parseInt(value)
+    setParties(newParties)
+  }
+
+  const handleDocumentChange = (index: number, value: string) => {
+    const newParties = [...parties]
+    newParties[index].document = value
+    setParties(newParties)
+  }
+
+  const handleNameChange = (index: number, value: string) => {
+    const newParties = [...parties]
+    newParties[index].name = value
+    setParties(newParties)
+  }
+
+  const getError = (index: number, field: string): string | null => {
+    if (!errors[`${index}->${field}`]) return null
+    return errors[`${index}->${field}`]
+  }
+
+  useEffect(() => {
+    updateFormData('adverseParty', parties)
+  }, [parties])
+
 
   return (
     <div className="space-y-6">
       {parties.map((party, index) => (
-        <div 
-          key={party.id}
+        <div
+          key={index}
           className="rounded-lg border p-4 space-y-6 relative"
         >
           <div className="flex items-center justify-between">
@@ -65,11 +95,9 @@ export function PartiesForm() {
               variant="ghost"
               size="sm"
               className={cn(
-                "text-red-500 hover:text-red-600 hover:bg-red-50",
-                parties.length === 1 && "opacity-50 cursor-not-allowed"
+                "text-red-500 hover:text-red-600 hover:bg-red-50"
               )}
-              onClick={() => removeParty(party.id)}
-              disabled={parties.length === 1}
+              onClick={() => removeParty(index)}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -77,70 +105,88 @@ export function PartiesForm() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor={`name-${party.id}`}>
+              <Label htmlFor={`name-${index}`}>
                 Nome <span className="text-red-500">*</span>
               </Label>
-              <Input 
-                id={`name-${party.id}`}
+              <Input
+                id={`name-${index}`}
                 placeholder="Nome da parte"
+                value={party.name}
+                onChange={(e) => handleNameChange(index, e.target.value)}
+                className={cn(getError(index, 'name') ? 'border-red-500' : '')}
               />
+              {getError(index, 'name') && <p className="text-red-500 text-sm">{getError(index, 'name')}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`person-type-${party.id}`}>
+              <Label htmlFor={`person-type-${index}`}>
                 Tipo de pessoa <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={party.personType}
-                onValueChange={(value) => handlePersonTypeChange(party.id, value)}
+                value={party.idPersonType ? party.idPersonType.toString() : ''}
+                onValueChange={(value) => handlePersonTypeChange(index, value)}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  className={cn(getError(index, 'idPersonType') ? 'border-red-500' : '')}
+                >
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pf">Pessoa Física</SelectItem>
-                  <SelectItem value="pj">Pessoa Jurídica</SelectItem>
+                  {personTypeOptions.map((type) => (
+                    <SelectItem key={type.value} value={type.value.toString()}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {getError(index, 'idPersonType') && <p className="text-red-500 text-sm">{getError(index, 'idPersonType')}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`document-${party.id}`}>
-                {party.personType === 'pj' ? 'CNPJ' : 'CPF'}
+              <Label htmlFor={`document-${index}`}>
+                {party.idPersonType === PersonType.COMPANY ? 'CNPJ' : 'CPF'}
               </Label>
-              <Input 
-                id={`document-${party.id}`}
-                placeholder={party.personType === 'pj' ? '00.000.000/0000-00' : '000.000.000-00'}
-                value={party.document}
-                onChange={(e) => {
-                  // Adicionar máscara de CPF/CNPJ aqui
-                }}
-              />
+              {party.idPersonType === PersonType.COMPANY ?
+                <CustomMaskedInput
+                  id={`document-${index}`}
+                  placeholder="00.000.000/0000-00"
+                  onChange={(e) => handleDocumentChange(index, e.target.value)}
+                  value={party.document}
+                  mask="11.111.111/1111-11"
+                />
+                :
+                <CustomMaskedInput
+                  id={`document-${index}`}
+                  placeholder="000.000.000-00"
+                  value={party.document}
+                  mask="111.111.111-11"
+                  onChange={(e) => handleDocumentChange(index, e.target.value)}
+                />
+              }
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor={`party-type-${party.id}`}>
+              <Label htmlFor={`party-type-${index}`}>
                 Tipo de parte <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={party.partyType}
-                onValueChange={(value) => {
-                  setParties(parties.map(p => 
-                    p.id === party.id ? { ...p, partyType: value } : p
-                  ))
-                }}
+                value={party.idType ? party.idType.toString() : ''}
+                onValueChange={(value) => handleAdversePartyTypeChange(index, value)}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  className={cn(getError(index, 'idType') ? 'border-red-500' : '')}
+                >
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {tiposParteOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                  {adversePartyTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value.toString()}>
                       {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {getError(index, 'idType') && <p className="text-red-500 text-sm">{getError(index, 'idType')}</p>}
             </div>
           </div>
         </div>

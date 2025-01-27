@@ -1,5 +1,6 @@
 import { API_URL } from '@/config/api'
 import { LitigationStatus } from '@/constants';
+import { AdversyParty } from '@/types/adversy-party';
 import { Task } from '@/types/tasks';
 import { authCookies } from '@/utils/auth-cookies';
 
@@ -227,6 +228,18 @@ export namespace RemoveAdverseParty {
     idOrganization: string;
   }
 }
+export type LitigationParamsTask = {
+  title: string;
+  deadline: string;
+  idResponsible?: string;
+  idPriority: number;
+}
+
+export type LitigationParamsClient = {
+  name: string;
+  phone: string;
+  idQualification: number;
+}
 export interface LitigationParams {
   processNumber: string;
   instance: number;
@@ -235,12 +248,7 @@ export interface LitigationParams {
   idClient?: string;
   nick?: string;
   obs?: string;
-  adverseParty?: {
-    name: string;
-    idType: number;
-    idPersonType: number;
-    document?: string;
-  }[];
+  adverseParty?: Omit<AdversyParty, 'id'>[];
   caseCover: {
     distributionDate?: string;
     distributionType?: string;
@@ -256,21 +264,12 @@ export interface LitigationParams {
     extraSubject?: string;
     alternativeNumber?: string;
   }
-  tasks?: {
-    title: string;
-    deadline: string;
-    idResponsible?: string;
-    idPriority?: number;
-  }[];
+  tasks?: LitigationParamsTask[];
   relatedProcesses?: {
     processNumber: string;
     instance: number;
   }[];
-  client?: {
-    name: string;
-    phone: string;
-    idQualification?: number;
-  };
+  client?: LitigationParamsClient;
 
 }
 export interface CreateLitigationParams {

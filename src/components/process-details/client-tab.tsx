@@ -53,7 +53,7 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
         params.client = {
           name: newBeneficiary.name,
           phone: newBeneficiary.phone,
-          idQualification: idQualification || undefined,
+          idQualification: idQualification,
         }
       } else {
         if (!idBeneficiary) {

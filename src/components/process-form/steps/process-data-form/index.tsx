@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback } from 'react'
-import { useProcessForm } from '@/hooks/useProcessForm'
+import { useCallback } from 'react'
+import { useProcessForm } from '@/context/useProcessModalForm'
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -16,9 +16,7 @@ import { formatCurrency } from '@/utils/format'
 import { useCourt } from '@/hooks/useCourt'
 import { useCounty } from '@/hooks/useCounty'
 import { Combobox } from '@/components/combo-box'
-import { courtSystems, UF } from '@/constants'
-import AutoComplete from '@/components/autocomplete'
-import { DatePicker } from '@/components/datepicker'
+import { courtSystems, LitigationStatus, UF } from '@/constants'
 import { DebounceCombobox } from '@/components/debounce-combo-box'
 import {
   Tooltip,
@@ -33,11 +31,9 @@ import { areaOptions } from "@/lib/constants/area-types"
 import { SelectSearch } from "@/components/ui/select-search"
 
 export function ProcessDataForm() {
-  const { formData, updateFormData } = useProcessForm()
-  const [isChecked, setIsChecked] = useState(true)
-  const [value, setValue] = useState('')
   const { getCourtsQuery } = useCourt()
   const { getCountiesQuery, changeFilter: changeCountyFilter } = useCounty()
+  const { formData, updateFormData, updateCaseCover, errors } = useProcessForm()
 
   const formatCNJ = useCallback((value: string) => {
     return value
@@ -52,29 +48,24 @@ export function ProcessDataForm() {
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/\D/g, '')
     const formattedValue = rawValue ? formatCurrency(rawValue) : ''
-    setValue(formattedValue)
-    updateFormData('processData', { ...formData.processData, value: formattedValue })
+    updateCaseCover('claimValue', formattedValue)
   }
 
   const handleStatusChange = (checked: boolean) => {
-    setIsChecked(checked)
-    updateFormData('processData', { ...formData.processData, status: checked })
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    updateFormData('processData', { ...formData.processData, [field]: value })
+    updateFormData('idStatus', checked ? LitigationStatus.ACTIVE : LitigationStatus.ARCHIVED)
   }
 
   const handleChangeUF = (value: string | number) => {
-    updateFormData('processData', { ...formData.processData, uf: +value })
+    updateFormData('uf', +value)
     changeCountyFilter({
       idUf: +value,
+      searchTerm: '',
       page: 1
     })
   }
 
   const handleFetchCounty = async (value: string) => {
-    const idUf = formData.processData.state ? +formData.processData.state : undefined;
+    const idUf = formData.uf ? +formData.uf : undefined;
     changeCountyFilter({
       searchTerm: value,
       limit: 10,
@@ -84,17 +75,7 @@ export function ProcessDataForm() {
   }
   const handleCNJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCNJ(e.target.value)
-    handleInputChange('cnjNumber', formatted)
-  }
-
-  const isFieldRequired = (field: string) => {
-    const requiredFields = ['cnjNumber', 'instance', 'area']
-    return requiredFields.includes(field)
-  }
-
-  const getFieldError = (field: string) => {
-    if (!isFieldRequired(field)) return false
-    return !formData.processData[field as keyof typeof formData.processData]
+    updateFormData('processNumber', formatted)
   }
 
   return (
@@ -111,14 +92,14 @@ export function ProcessDataForm() {
                   id="status"
                   defaultChecked
                   className="data-[state=checked]:bg-[#0146cf]"
-                  checked={isChecked}
-                  onCheckedChange={setIsChecked}
+                  checked={formData?.idStatus === LitigationStatus.ACTIVE}
+                  onCheckedChange={handleStatusChange}
                 />
                 <span className={cn(
                   "text-sm font-medium",
-                  isChecked ? "text-green-600" : "text-red-600"
+                  formData?.idStatus === LitigationStatus.ACTIVE ? "text-green-600" : "text-red-600"
                 )}>
-                  {isChecked ? 'Ativo' : 'Baixado'}
+                  {formData?.idStatus === LitigationStatus.ACTIVE ? 'Ativo' : 'Baixado'}
                 </span>
               </div>
             </div>
@@ -144,21 +125,27 @@ export function ProcessDataForm() {
               <Input
                 id="cnj"
                 placeholder="0000000-00.0000.0.00.0000"
-                value={formData.processData.cnjNumber}
+                value={formData?.processNumber}
                 onChange={handleCNJChange}
                 maxLength={25}
                 className={cn(
                   "transition-colors",
-                  getFieldError('cnjNumber') && "border-red-200 focus:border-red-400"
+                  errors.processNumber && "border-red-200 focus:border-red-400"
                 )}
               />
+              {errors.processNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.processNumber}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="instance">
                 Instância <span className="text-red-500">*</span>
               </Label>
-              <Select>
+              <Select
+                onValueChange={(value) => updateFormData('instance', +value)}
+                value={formData?.instance ? String(formData?.instance) : ''}
+              >
                 <SelectTrigger>
                   <SelectValue
                     placeholder="Selecione"
@@ -173,13 +160,16 @@ export function ProcessDataForm() {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.instance && (
+                <p className="text-red-500 text-sm mt-1">{errors.instance}</p>
+              )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="value">Valor da Causa</Label>
               <Input
                 id="value"
-                value={value}
+                value={formData?.caseCover?.claimValue}
                 onChange={handleValueChange}
                 placeholder="R$ 0,00"
               />
@@ -196,8 +186,8 @@ export function ProcessDataForm() {
             <Input
               id="alternative"
               placeholder="Digite o número alternativo"
-              value={formData.processData.alternativeNumber}
-              onChange={(e) => handleInputChange('alternativeNumber', e.target.value)}
+              value={formData?.caseCover?.alternativeNumber}
+              onChange={(e) => updateCaseCover('alternativeNumber', e.target.value)}
             />
           </div>
 
@@ -206,8 +196,8 @@ export function ProcessDataForm() {
             <Input
               id="distribution-date"
               type="date"
-              value={formData.processData.distributionDate}
-              onChange={(e) => handleInputChange('distributionDate', e.target.value)}
+              value={formData?.caseCover?.distributionDate}
+              onChange={(e) => updateCaseCover('distributionDate', e.target.value)}
             />
           </div>
 
@@ -216,8 +206,8 @@ export function ProcessDataForm() {
             <Input
               id="distribution-type"
               placeholder="Digite o tipo"
-              value={formData.processData.distributionType}
-              onChange={(e) => handleInputChange('distributionType', e.target.value)}
+              value={formData?.caseCover?.distributionType}
+              onChange={(e) => updateCaseCover('distributionType', e.target.value)}
             />
           </div>
         </div>
@@ -228,12 +218,12 @@ export function ProcessDataForm() {
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="area">
-              Área <span className="text-red-500">*</span>
+              Área
             </Label>
             <SelectSearch
               options={areaOptions}
-              value={formData.processData.area}
-              onValueChange={(value) => handleInputChange('area', value)}
+              value={formData?.caseCover?.area}
+              onValueChange={(value) => updateCaseCover('area', value)}
               placeholder="Selecione a área"
             />
           </div>
@@ -243,8 +233,8 @@ export function ProcessDataForm() {
             <Input
               id="subject"
               placeholder="Digite o assunto"
-              value={formData.processData.subject}
-              onChange={(e) => handleInputChange('subject', e.target.value)}
+              value={formData?.caseCover?.nature}
+              onChange={(e) => updateCaseCover('nature', e.target.value)}
             />
           </div>
 
@@ -253,13 +243,12 @@ export function ProcessDataForm() {
             <Input
               id="extra-subject"
               placeholder="Digite o assunto extra"
-              value={formData.processData.extraSubject}
-              onChange={(e) => handleInputChange('extraSubject', e.target.value)}
+              value={formData?.caseCover?.extraSubject}
+              onChange={(e) => updateCaseCover('extraSubject', e.target.value)}
             />
           </div>
         </div>
       </div>
-
 
       <div className="rounded-lg border p-4 space-y-6">
         <h3 className="text-sm font-medium text-muted-foreground">Informações do Tribunal</h3>
@@ -268,7 +257,7 @@ export function ProcessDataForm() {
             <Label htmlFor="uf">UF Comarca</Label>
             <Combobox
               id="uf"
-              value={formData.processData.state || ''}
+              value={formData?.uf || ''}
               setValue={handleChangeUF}
               className="w-full"
               options={Object.values(UF).map(({ id, uf }) => ({ value: String(id), label: uf }))}
@@ -289,8 +278,8 @@ export function ProcessDataForm() {
                 label: county.name ? `${county.name} - ${county.uf.name}` : `COMARCA DE ${county.city.name} - ${county.uf.name}`
               }))}
               className="w-full"
-              value={formData.processData.county || ''}
-              setValue={(value) => handleInputChange("county", String(value))}
+              value={formData?.caseCover?.idCounty ? String(formData?.caseCover?.idCounty) : ''}
+              setValue={(value) => updateCaseCover('idCounty', +value)}
               buttonWidth="200px"
               placeholder="Selecione a comarca"
               inputPlaceholder="Digite a comarca"
@@ -303,12 +292,12 @@ export function ProcessDataForm() {
             <Combobox
               id="court"
               options={(getCourtsQuery.data?.courts || []).map((court) => ({ value: court.id.toString(), label: court.name }))}
-              value={String(formData.processData.court)}
-              setValue={(value) => handleInputChange("court", String(value))}
+              value={formData?.caseCover?.idCourt ? String(formData?.caseCover?.idCourt) : ''}
+              setValue={(value) => updateCaseCover('idCourt', +value)}
               className="w-full"
               buttonWidth="200px"
-              placeholder="Selecione a comarca"
-              inputPlaceholder="Digite a comarca"
+              placeholder="Selecione o tribunal"
+              inputPlaceholder="Digite o tribunal"
               emptyMessage=""
             />
           </div>
@@ -318,12 +307,12 @@ export function ProcessDataForm() {
             <Combobox
               id="court-system"
               options={courtSystems.map((courtSystem) => ({ value: courtSystem.id.toString(), label: courtSystem.name }))}
-              value={String(formData.processData.courtSystem)}
-              setValue={(value) => handleInputChange("courtSystem", String(value))}
+              value={formData?.caseCover?.idCourtSystem ? String(formData?.caseCover?.idCourtSystem) : ''}
+              setValue={(value) => updateCaseCover('idCourtSystem', +value)}
               className="w-full"
               buttonWidth="200px"
               placeholder="Selecione o sistema do tribunal"
-              inputPlaceholder="Selecione o sistema do tribunal"
+              inputPlaceholder="Digite o sistema do tribunal"
               emptyMessage=""
             />
           </div>

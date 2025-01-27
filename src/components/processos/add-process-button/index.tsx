@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProcessFormModal } from '@/components/process-form'
-import { Plus } from 'lucide-react'
+import { ProcessFormProvider } from '@/context/useProcessModalForm'
 
 export function AddProcessButton() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
     <>
-      <Button 
+      <Button
         onClick={() => setIsModalOpen(true)}
         className="bg-[#0146cf] hover:bg-[#0146cf]/90"
       >
@@ -18,10 +19,12 @@ export function AddProcessButton() {
         Cadastrar um processo
       </Button>
 
-      <ProcessFormModal 
-        open={isModalOpen} 
-        onOpenChange={setIsModalOpen} 
-      />
+      <ProcessFormProvider>
+        <ProcessFormModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+        />
+      </ProcessFormProvider>
     </>
   )
 } 
