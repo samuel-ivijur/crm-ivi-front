@@ -1,4 +1,4 @@
-export const CommunicationStatus: { [k: string]: number } = {
+export const CommunicationStatus = {
   ACCEPTED: 1,
   REFUSED: 2,
   SILENCE: 3,

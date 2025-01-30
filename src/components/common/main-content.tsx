@@ -5,11 +5,10 @@ import { useSidebar } from "./sidebar/sidebar-context"
 
 export function MainContent({ children }: { children: React.ReactNode }) {
   const { isCollapsed } = useSidebar()
-
   return (
     <main 
       className={cn(
-        "min-h-screen transition-[margin] duration-300 ease-in-out",
+        "flex-1 min-h-screen transition-[margin] duration-300 ease-in-out",
         "p-6",
         isCollapsed ? "lg:ml-16" : "lg:ml-64"
       )}

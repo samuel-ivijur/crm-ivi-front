@@ -143,6 +143,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
       await litigationsService.editLitigation({
         id: data.id,
         idOrganization: data.organizationid,
+        idStatus: formData.isActive ? LitigationStatus.ACTIVE : LitigationStatus.ARCHIVED,
         caseCover: {
           alternativeNumber: formData?.alternative || '',
           distributionDate: formData?.distributionDate || undefined,
@@ -232,6 +233,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                         checked={(formData.isActive !== null && formData.isActive) || false}
                         onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
                         className="data-[state=checked]:bg-[#0146cf]"
+                        disabled={!isEditing}
                       />
                       <span className="text-sm font-medium">{formData.isActive ? 'Ativo' : 'Arquivado'}</span>
                     </div>

@@ -1,14 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Download, Plus } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { ClientStats } from "@/components/clientes/client-stats"
 import { ClientTable } from "@/components/clientes/client-table"
 import { ClientFormModal } from "@/components/clientes/client-form/client-form-modal"
+import { useAuth } from "@/hooks/useAuth"
+import { useBeneficiary } from "@/hooks/useBeneficiary"
 
 export default function ClientesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { 
+    getBeneficiariesQuery, 
+    changeFilter: changeBeneficiaryFilter,
+    reportBeneficiaryQuery,
+    invalidateBeneficiariesQuery
+  } = useBeneficiary()
+  const { getSelectedOrganization } = useAuth();
+
+   useEffect(() => {
+    const idOrganization = getSelectedOrganization()
+    changeBeneficiaryFilter({ idOrganization })
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -32,7 +46,7 @@ export default function ClientesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <ClientStats />
+        <ClientStats data={reportBeneficiaryQuery.data} />
       </div>
 
       {/* Table Section */}
@@ -45,7 +59,10 @@ export default function ClientesPage() {
           </Button>
         </div>
         <div className="p-4">
-          <ClientTable />
+          <ClientTable 
+            data={getBeneficiariesQuery.data?.beneficiaries || []} 
+            refresh={() => { invalidateBeneficiariesQuery() }}
+          />
         </div>
       </div>
 

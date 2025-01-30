@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { useProcessForm } from "@/context/useProcessModalForm"
 import { AdversyParty } from "@/types/adversy-party"
 import { adversePartyTypeOptions, PersonType, personTypeOptions } from "@/constants"
-import CustomMaskedInput from "@/components/MaskedInput"
+import CustomMaskedInput from "@/components/masked-input"
 import { toast } from "@/hooks/use-toast"
 
 export function PartiesForm() {

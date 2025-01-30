@@ -20,7 +20,7 @@ import { useEffect } from "react"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { tiposParteOptions } from "@/lib/constants/parte-types"
-import CustomMaskedInput from "@/components/MaskedInput"
+import CustomMaskedInput from "@/components/masked-input"
 import { useProcessForm } from "@/context/useProcessModalForm"
 
 const formatDate = (value: string) => {
@@ -36,7 +36,7 @@ interface AddressData {
 }
 
 export function ClientForm() {
-  const { formData, updateFormData, errors, steps, currentStep } = useProcessForm()
+  const { formData, updateFormData, errors } = useProcessForm()
   const { getBeneficiariesQuery, changeFilter } = useBeneficiary()
   const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
   const { getSelectedOrganization } = useAuth();

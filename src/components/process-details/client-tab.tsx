@@ -5,7 +5,7 @@ import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger,
 import { useBeneficiary } from "@/hooks/useBeneficiary"
 import { DebounceCombobox } from "../debounce-combo-box"
 import { BeneficairyQualification, BeneficiaryQualificationLabels } from "@/constants"
-import CustomMaskedInput from "../MaskedInput"
+import CustomMaskedInput from "../masked-input"
 import PopConfirm from "../popconfirm"
 import { Beneficiary } from "@/types/beneficiarie"
 import { Skeleton } from "../ui/skeleton"

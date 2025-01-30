@@ -4,12 +4,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Client } from "@/types/client"
+import { Beneficiary } from "@/types/beneficiarie"
 
 interface LinkProcessModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  client: Client | null
+  client: Beneficiary | null
 }
 
 export function LinkProcessModal({ open, onOpenChange, client }: LinkProcessModalProps) {

@@ -3,66 +3,49 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, XCircle, MessageSquare, UserCheck } from 'lucide-react'
+import { useEffect, useState } from "react"
+import { ReportBeneficiaryResult } from "@/services/api/beneficiaries"
 
-interface StatsCardProps {
-  title: string
-  total: number
-  active: number
-  inactive: number
+type ClientStatsProps = {
+  data: ReportBeneficiaryResult | undefined
 }
+export function ClientStats({ data }: ClientStatsProps) {
+  const [total, setTotal] = useState({
+    clients: 0,
+    communication: 0,
+    accepts: 0,
+  });
 
-function StatsCard({ title, total, active, inactive }: StatsCardProps) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Badge variant="outline" className="text-[#0146cf]">
-          {total}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Ativos</span>
-            <div className="flex items-center gap-2">
-              <span>{active}</span>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Inativos</span>
-            <div className="flex items-center gap-2">
-              <span>{inactive}</span>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+  useEffect(() => {
+    if (data) {
+      setTotal({
+        clients: data.total.actives + data.total.inactives,
+        communication: data.communication.actives + data.communication.inactives,
+        accepts: data.accepts.accepted + data.accepts.notAccepted,
+      });
+    }
+  }, [data]);
 
-export function ClientStats() {
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-          <Badge variant="outline" className="text-[#0146cf]">150</Badge>
+          <Badge variant="outline" className="text-[#0146cf]">{total.clients}</Badge>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Ativos</span>
               <div className="flex items-center gap-2">
-                <span>120</span>
+                <span>{data && data.total.actives}</span>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Inativos</span>
               <div className="flex items-center gap-2">
-                <span>30</span>
+                <span>{data && data.total.inactives}</span>
                 <XCircle className="h-4 w-4 text-red-500" />
               </div>
             </div>
@@ -72,21 +55,21 @@ export function ClientStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Comunicações</CardTitle>
-          <Badge variant="outline" className="text-[#0146cf]">150</Badge>
+          <Badge variant="outline" className="text-[#0146cf]">{total.communication}</Badge>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Ativos</span>
               <div className="flex items-center gap-2">
-                <span>100</span>
+                <span>{data && data.communication.actives}</span>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Inativos</span>
               <div className="flex items-center gap-2">
-                <span>50</span>
+                <span>{data && data.communication.inactives}</span>
                 <XCircle className="h-4 w-4 text-red-500" />
               </div>
             </div>
@@ -96,21 +79,21 @@ export function ClientStats() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Habilitados</CardTitle>
-          <Badge variant="outline" className="text-[#0146cf]">150</Badge>
+          <Badge variant="outline" className="text-[#0146cf]">{total.accepts}</Badge>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Aceite</span>
               <div className="flex items-center gap-2">
-                <span>80</span>
+                <span>{data && data.accepts.accepted}</span>
                 <UserCheck className="h-4 w-4 text-green-500" />
               </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Não aceite</span>
               <div className="flex items-center gap-2">
-                <span>70</span>
+                <span>{data && data.accepts.notAccepted}</span>
                 <MessageSquare className="h-4 w-4 text-yellow-500" />
               </div>
             </div>

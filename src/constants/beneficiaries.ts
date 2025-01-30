@@ -15,3 +15,8 @@ export const BeneficiaryQualificationLabels: { [k: number]: string } = {
   5: 'Réu',
   6: 'Autor',
 };
+
+export const BeneficiaryStatus = {
+  ACTIVE: 1,
+  INACTIVE: 2,
+};

@@ -15,7 +15,7 @@ import {
 import { GetLitigation, litigationsService } from "@/services/api/litigations"
 import { Party } from "@/types/parties"
 import { adversePartyTypeOptions, PersonType, personTypeOptions } from "@/constants"
-import CustomMaskedInput from "../MaskedInput"
+import CustomMaskedInput from "../masked-input"
 import { toast } from "@/hooks/use-toast"
 import PopConfirm from "../popconfirm"
 import Image from "next/image";
