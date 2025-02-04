@@ -31,7 +31,7 @@ const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = fal
         <ReactPopover.Root open={autoConfirm ? false : open} onOpenChange={changeChange}>
             <ReactPopover.Trigger asChild>{children}</ReactPopover.Trigger>
             <ReactPopover.Portal>
-                <ReactPopover.Content className="Popconfirm" sideOffset={5}>
+                <ReactPopover.Content className="Popconfirm" sideOffset={5} style={{ zIndex: 9999 }}>
                     <div className="flex flex-col gap-2">
                         <h4 className="text-md font-medium">{title}</h4>
                         <p className="text-sm text-gray-500">{description}</p>

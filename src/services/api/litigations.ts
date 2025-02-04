@@ -51,6 +51,20 @@ export const litigationsService = {
       throw new Error(errorData.message || 'Erro ao criar processo');
     }
   },
+  saveLitigation: async (params: SaveLitigation.Params): Promise<{ id: string }> => {
+    const response = await fetch(`${API_URL}/litigations/save`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar processo');
+    }
+
+    const data: SaveLitigation.Result = await response.json()
+    return data
+  },
   editLitigation: async (
     params: {
       id: string;
@@ -191,6 +205,15 @@ export namespace GetLitigations {
       id: number;
       description: string;
     };
+  }
+}
+
+export namespace SaveLitigation {
+  export type Params = LitigationParams & {
+    idOrganization: string;
+  }
+  export type Result = {
+    id: string;
   }
 }
 

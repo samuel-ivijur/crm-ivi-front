@@ -12,33 +12,32 @@ import {
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 import { FormData } from "../client-form-modal"
-import { Switch } from "@/components/ui/switch"
+import { PersonType, UF } from "@/constants"
+import CustomMaskedInput from "@/components/masked-input"
+import { toast } from "@/hooks/use-toast"
 
 interface ClientDataFormProps {
   formData: FormData
   setFormData: React.Dispatch<React.SetStateAction<FormData>>
   phoneRequired: boolean
+  errors: string[]
 }
 
-export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientDataFormProps) {
-  const handleDocumentChange = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    const formattedValue = numbers.length <= 11 
-      ? numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-      : numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
-    setFormData(prev => ({ ...prev, document: formattedValue }))
-  }
-
-  const handlePhoneChange = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    const formattedValue = numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-    setFormData(prev => ({ ...prev, phone: formattedValue }))
-  }
-
+export function ClientDataForm({ formData, setFormData, phoneRequired, errors }: ClientDataFormProps) {
   const handleDateChange = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    const formattedValue = numbers.replace(/(\d{2})(\d{2})(\d{4})/, '$1/$2/$3')
-    setFormData(prev => ({ ...prev, birthDate: formattedValue }))
+    const date = new Date(value)
+    if (!date || isNaN(date.getTime())) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    if (date > today) {
+      toast({
+        title: "Data inválida",
+        description: "A data de nascimento não pode ser maior que a data atual",
+        variant: "destructive"
+      })
+      return
+    }
+    setFormData(prev => ({ ...prev, birthDate: value }))
   }
 
   const handleCepChange = (value: string) => {
@@ -52,7 +51,7 @@ export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientD
 
   const fetchAddress = async () => {
     if (formData.address.cep.length < 8) return
-    
+
     try {
       const cleanCep = formData.address.cep.replace(/\D/g, '')
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
@@ -88,23 +87,72 @@ export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientD
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="Digite o nome"
-            className="transition-colors focus:border-[#0146cf]"
+            className={`transition-colors focus:border-[#0146cf] ${errors.includes("name") ? "border-red-500" : ""}`}
             required
           />
+          {errors.includes("name") && (
+            <p className="text-red-500 text-sm">Nome é obrigatório</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="document">
-            CPF/CNPJ <span className="text-red-500">*</span>
+          <Label htmlFor="person-type">
+            Tipo Pessoa <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="document"
-            value={formData.document}
-            onChange={(e) => handleDocumentChange(e.target.value)}
-            placeholder="Digite o CPF ou CNPJ"
-            className="transition-colors focus:border-[#0146cf]"
-            required
-          />
+          <Select
+            value={formData.type ? String(formData.type) : undefined}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, type: +value }))}
+          >
+            <SelectTrigger
+              className={`transition-colors focus:border-[#0146cf] ${errors.includes("type") ? "border-red-500" : ""}`}
+            >
+              <SelectValue placeholder="Selecione o tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={String(PersonType.PERSON)}>Pessoa Física</SelectItem>
+              <SelectItem value={String(PersonType.COMPANY)}>Pessoa Jurídica</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.includes("type") && (
+            <p className="text-red-500 text-sm">Tipo de pessoa é obrigatório</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          {formData.type === PersonType.COMPANY ? (
+            <>
+              <Label htmlFor={`document-${PersonType.COMPANY}`}>
+                CNPJ
+              </Label>
+              <CustomMaskedInput
+                id={`document-${PersonType.COMPANY}`}
+                key={`document-${PersonType.COMPANY}`}
+                mask="11.111.111/1111-11"
+                value={formData.document || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, document: String(e.target.value).replace(/\D/g, '') }))}
+                className="transition-colors focus:border-[#0146cf]"
+                placeholderChar="_"
+                disabled={formData.type !== PersonType.COMPANY}
+              />
+            </>
+          ) : (
+            <>
+              <Label htmlFor={`document-${PersonType.PERSON}`}>
+                CPF
+              </Label>
+              <CustomMaskedInput
+                id={`document-${PersonType.PERSON}`}
+                key={`document-${PersonType.PERSON}`}
+                mask="111.111.111-11"
+                value={formData.document || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, document: String(e.target.value).replace(/\D/g, '') }))}
+                className="transition-colors focus:border-[#0146cf]"
+                placeholderChar="_"
+                disabled={formData.type !== PersonType.PERSON}
+              />
+            </>
+
+          )}
         </div>
 
         <div className="space-y-2">
@@ -123,32 +171,14 @@ export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientD
           <Label htmlFor="phone">
             Telefone {phoneRequired && <span className="text-red-500">*</span>}
           </Label>
-          <Input
+          <CustomMaskedInput
             id="phone"
             value={formData.phone}
-            onChange={(e) => handlePhoneChange(e.target.value)}
-            placeholder="(00) 00000-0000"
+            onChange={(e) => setFormData(prev => ({ ...prev, phone: String(e.target.value).replace(/\D/g, '') }))}
             className="transition-colors focus:border-[#0146cf]"
             required={phoneRequired}
+            mask="(11) 11111-1111"
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="person-type">
-            Tipo Pessoa <span className="text-red-500">*</span>
-          </Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pf">Pessoa Física</SelectItem>
-              <SelectItem value="pj">Pessoa Jurídica</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="space-y-2">
@@ -176,6 +206,7 @@ export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientD
                 placeholder="00000-000"
                 className="pr-8 transition-colors focus:border-[#0146cf]"
                 maxLength={9}
+                onBlur={fetchAddress}
               />
               <Button
                 type="button"
@@ -249,33 +280,9 @@ export function ClientDataForm({ formData, setFormData, phoneRequired }: ClientD
                 <SelectValue placeholder="Selecione o estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ac">AC</SelectItem>
-                <SelectItem value="al">AL</SelectItem>
-                <SelectItem value="ap">AP</SelectItem>
-                <SelectItem value="am">AM</SelectItem>
-                <SelectItem value="ba">BA</SelectItem>
-                <SelectItem value="ce">CE</SelectItem>
-                <SelectItem value="df">DF</SelectItem>
-                <SelectItem value="es">ES</SelectItem>
-                <SelectItem value="go">GO</SelectItem>
-                <SelectItem value="ma">MA</SelectItem>
-                <SelectItem value="mt">MT</SelectItem>
-                <SelectItem value="ms">MS</SelectItem>
-                <SelectItem value="mg">MG</SelectItem>
-                <SelectItem value="pa">PA</SelectItem>
-                <SelectItem value="pb">PB</SelectItem>
-                <SelectItem value="pr">PR</SelectItem>
-                <SelectItem value="pe">PE</SelectItem>
-                <SelectItem value="pi">PI</SelectItem>
-                <SelectItem value="rj">RJ</SelectItem>
-                <SelectItem value="rn">RN</SelectItem>
-                <SelectItem value="rs">RS</SelectItem>
-                <SelectItem value="ro">RO</SelectItem>
-                <SelectItem value="rr">RR</SelectItem>
-                <SelectItem value="sc">SC</SelectItem>
-                <SelectItem value="sp">SP</SelectItem>
-                <SelectItem value="se">SE</SelectItem>
-                <SelectItem value="to">TO</SelectItem>
+                {UF.map((uf) => (
+                  <SelectItem key={uf.id} value={uf.uf}>{uf.uf}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -108,7 +108,6 @@ export function ClientTable({ data, refresh }: ClientTableProps) {
   }
 
   const getState = (id: string, action?: Actions): "loading" | "iddle" | "disabled" => {
-    console.log(id, action, Object.values(performingAction))
     if (performingAction[id] && action) {
       return performingAction[id] === action ? "loading" : "iddle"
     }

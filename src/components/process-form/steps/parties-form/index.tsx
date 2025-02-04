@@ -78,7 +78,6 @@ export function PartiesForm() {
     updateFormData('adverseParty', parties)
   }, [parties])
 
-
   return (
     <div className="space-y-6">
       {parties.map((party, index) => (

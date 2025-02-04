@@ -1,7 +1,5 @@
 "use client"
 
-import { Check } from 'lucide-react'
-
 interface Step {
   id: string
   name: string

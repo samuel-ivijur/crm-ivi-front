@@ -3,7 +3,7 @@ import { Check } from 'lucide-react'
 interface Step {
   id: number
   title: string
-  component: React.ComponentType
+  component: JSX.Element
 }
 
 interface ProcessFormStepperProps {

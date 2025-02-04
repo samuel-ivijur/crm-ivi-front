@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, ReactNode } from 'react'
+import { useState, createContext, useContext, ReactNode, useCallback, useMemo } from 'react'
 import { LitigationParams, LitigationParamsClient, litigationsService } from '@/services/api/litigations';
 import { LitigationStatus } from '@/constants';
 import { DeadlinesForm, PartiesForm, ProcessDataForm, RelatedProcessesForm } from '@/components/process-form';
@@ -23,7 +23,12 @@ const initialState: FormData = {
   },
   selectClient: false
 }
-
+interface Step {
+  id: number;
+  title: string;
+  component: JSX.Element;
+  validate: () => boolean;
+}
 interface ProcessModalFormContextProps {
   formData: FormData;
   currentStep: number;
@@ -32,12 +37,7 @@ interface ProcessModalFormContextProps {
   handleNext: () => boolean;
   handlePrevious: () => void;
   handleSubmit: () => Promise<boolean>;
-  steps: {
-    id: number;
-    title: string;
-    component: React.ComponentType<any>;
-    validate: () => boolean;
-  }[];
+  steps: Step[];
   errors: { [key: string]: string };
   resetForm: () => void;
 }
@@ -50,15 +50,23 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { getSelectedOrganization } = useAuth()
 
-  const steps = [
+  const updateFormData = (key: keyof FormData, data: any) => {
+    setFormData(prev => ({ ...prev, [key]: data }))
+  };
+
+  const steps: Step[] = [
     {
       id: 1,
       title: "Dados do Processo",
-      component: ProcessDataForm,
+      component: <ProcessDataForm
+        formData={formData}
+        setFormData={updateFormData}
+        errors={errors}
+      />,
       validate: (): boolean => {
         const requiredFields: Array<keyof LitigationParams> = ['processNumber', 'instance']
         const newErrors: { [key: string]: string } = {}
-        if (String(formData.processNumber).length < 25) {
+        if (String(formData.processNumber).replace(/\D/g, '').length < 20) {
           newErrors.processNumber = 'Número do processo inválido'
         }
         requiredFields.forEach(field => {
@@ -71,7 +79,7 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     {
       id: 2,
       title: "Partes",
-      component: PartiesForm,
+      component: <PartiesForm />,
       validate: () => {
         if (!formData.adverseParty) return true
         const requiredFields: Array<keyof Omit<AdversyParty, 'id'>> = ['name', 'idPersonType', 'idType']
@@ -88,13 +96,13 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     {
       id: 3,
       title: "Prazos/Tarefas",
-      component: DeadlinesForm,
+      component: <DeadlinesForm />,
       validate: () => true
     },
     {
       id: 4,
       title: "Processos Relacionados",
-      component: RelatedProcessesForm,
+      component: <RelatedProcessesForm />,
       validate: () => {
         if (!formData.relatedProcesses) return true
         const requiredFields: Array<keyof Omit<RelatedProcess, 'id'>> = ['processNumber', 'instance']
@@ -114,7 +122,7 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     {
       id: 5,
       title: "Cliente",
-      component: ClientForm,
+      component: <ClientForm />,
       validate: () => {
         const requiredFieldsRegister: Array<keyof LitigationParamsClient> = ['name', 'phone', 'idQualification']
 
@@ -136,10 +144,6 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     },
   ]
 
-  const updateFormData = (key: keyof FormData, data: any) => {
-    setFormData(prev => ({ ...prev, [key]: data }))
-  };
-
   const updateCaseCover = (key: keyof FormData["caseCover"], data: any) => {
     setFormData(prev => ({ ...prev, caseCover: { ...prev.caseCover, [key]: data } }))
   }
@@ -148,6 +152,7 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     if (!steps[currentStep - 1].validate()) return false
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
+      console.log(formData)
       return true
     }
     return false

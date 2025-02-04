@@ -3,11 +3,11 @@
 import { ProcessFormStepper } from './process-form-stepper'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { X } from 'lucide-react'
 import { useProcessForm } from '@/context/useProcessModalForm'
 import { toast } from '@/hooks/use-toast'
 import { useState } from 'react'
 import { useLitigation } from '@/hooks/useLitigations'
+import { ProcessDataForm } from './steps'
 
 interface ProcessFormModalProps {
   open: boolean
@@ -15,7 +15,14 @@ interface ProcessFormModalProps {
 }
 
 export function ProcessFormModal({ open, onOpenChange }: ProcessFormModalProps) {
-  const { currentStep, handleNext, handlePrevious, handleSubmit, steps, resetForm } = useProcessForm()
+  const {
+    currentStep,
+    handleNext,
+    handlePrevious,
+    handleSubmit,
+    steps,
+    resetForm,
+  } = useProcessForm()
   const { invalidateQuery } = useLitigation()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -53,21 +60,12 @@ export function ProcessFormModal({ open, onOpenChange }: ProcessFormModalProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[90vw] w-full lg:max-w-5xl max-h-[90vh] overflow-y-auto">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
-          onClick={() => onOpenChange(false)}
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Fechar</span>
-        </Button>
         <DialogHeader>
           <DialogTitle>Cadastro de Processo</DialogTitle>
         </DialogHeader>
         <ProcessFormStepper steps={steps} currentStep={currentStep} />
         <div className="mt-6">
-          {CurrentStepComponent && <CurrentStepComponent />}
+          {CurrentStepComponent}
         </div>
         <div className="mt-6 flex justify-between">
           <Button

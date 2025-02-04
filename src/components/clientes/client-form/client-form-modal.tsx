@@ -14,6 +14,9 @@ import { ClientDataForm } from "./steps/client-data-form"
 import { ClientProcessForm } from "./steps/client-process-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import PopConfirm from "@/components/popconfirm"
+import { LitigationParams } from "@/services/api/litigations"
+import { beneficiariesService } from "@/services/api/beneficiaries"
 
 interface ClientFormModalProps {
   open: boolean
@@ -26,7 +29,10 @@ export interface FormData {
   email: string
   phone: string
   birthDate: string
-  type: string
+  type?: number
+  status: boolean
+  communication: boolean
+  nick?: string
   address: {
     cep: string
     street: string
@@ -47,27 +53,40 @@ interface Step {
 }
 
 const steps: Step[] = [
-  { 
+  {
     id: "step-1",
     name: "Dados do Cliente",
     fields: ["name", "document", "email", "phone", "birthDate", "type", "address"]
   },
-  { 
+  {
     id: "step-2",
     name: "Vincular Processo",
-    fields: ["processNumber", "instance"] 
+    fields: ["processNumber", "instance"]
   }
 ]
 
+const initialLitigationRegister: LitigationParams = {
+  processNumber: "",
+  instance: 0,
+  caseCover: {},
+}
+
 export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
   const [currentStep, setCurrentStep] = useState<StepId>("step-1")
+  const [loading, setLoading] = useState<"search" | "register" | "finish" | null>(null)
+  const [isNewProcess, setIsNewProcess] = useState(false)
+  const [litigationRegister, setLitigationRegister] = useState<LitigationParams>(initialLitigationRegister)
+  const [litigationRegisterErrors, setLitigationRegisterErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState<FormData>({
     name: '',
     document: '',
     email: '',
     phone: '',
     birthDate: '',
-    type: '',
+    type: undefined,
+    status: true,
+    communication: false,
+    nick: undefined,
     address: {
       cep: '',
       street: '',
@@ -78,11 +97,26 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
       state: ''
     }
   })
-  const [isActive, setIsActive] = useState(true)
-  const [isCommunicationEnabled, setIsCommunicationEnabled] = useState(false)
   const [clientIdentification, setClientIdentification] = useState('')
+  const [errors, setErrors] = useState<string[]>([])
+
+  const validate = (): boolean => {
+    const newErrors: string[] = []
+    if (currentStep === "step-1") {
+      if (!formData.name) {
+        newErrors.push("name")
+      }
+      if (!formData.type) {
+        newErrors.push("type")
+      }
+    }
+    setErrors(newErrors)
+    return newErrors.length === 0
+  }
 
   const handleNext = () => {
+    if (!validate()) return
+    console.log(formData)
     const currentIndex = steps.findIndex(step => step.id === currentStep)
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id)
@@ -96,8 +130,11 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
     }
   }
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     console.log("Form submitted", formData)
+    setLoading("finish")
+    // awai1t beneficiariesService.
+    setLoading(null)
     onOpenChange(false)
   }
 
@@ -107,12 +144,12 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
         <DialogHeader>
           <DialogTitle>Cadastro de Cliente</DialogTitle>
         </DialogHeader>
-        
-        <ClientFormStepper 
+
+        <ClientFormStepper
           steps={steps}
-          currentStep={currentStep} 
+          currentStep={currentStep}
         />
-        
+
         <div className="mt-6">
           {currentStep === "step-1" && (
             <div className="space-y-8">
@@ -121,56 +158,67 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
                   <span className="block text-sm font-medium">Status</span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">
-                      {isActive ? "Ativo" : "Inativo"}
+                      {formData.status ? "Ativo" : "Inativo"}
                     </span>
                     <Switch
                       id="active"
-                      checked={isActive}
-                      onCheckedChange={setIsActive}
+                      checked={formData.status}
+                      onCheckedChange={() => setFormData(prev => ({ ...prev, status: !prev.status }))}
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-8">
-                  <div className="space-y-2">
-                    <span className="block text-sm font-medium">Comunicação</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {isCommunicationEnabled ? "Habilitada" : "Desabilitada"}
-                      </span>
-                      <Switch
-                        id="communication"
-                        checked={isCommunicationEnabled}
-                        onCheckedChange={setIsCommunicationEnabled}
-                      />
-                    </div>
-                  </div>
-
-                  {isCommunicationEnabled && (
+                {formData.status && (
+                  <div className="flex items-center gap-8">
                     <div className="space-y-2">
-                      <Label htmlFor="identification" className="text-sm font-medium">
-                        Como você quer ser identificado pelo cliente?
-                      </Label>
-                      <Input
-                        id="identification"
-                        value={clientIdentification}
-                        onChange={(e) => setClientIdentification(e.target.value)}
-                        placeholder="Ex: Dr. João Souza ou Escritório Souza Advogados"
-                        className="w-[300px] transition-colors focus:border-[#0146cf]"
-                      />
+                      <span className="block text-sm font-medium">Comunicação</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                          {formData.communication ? "Habilitada" : "Desabilitada"}
+                        </span>
+                        <Switch
+                          id="communication"
+                          checked={formData.communication}
+                          onCheckedChange={() => setFormData(prev => ({ ...prev, communication: !prev.communication }))}
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              <ClientDataForm 
+                    {formData.communication && (
+                      <div className="space-y-2">
+                        <Label htmlFor="identification" className="text-sm font-medium">
+                          Como você quer ser identificado pelo cliente?
+                        </Label>
+                        <Input
+                          id="identification"
+                          value={clientIdentification}
+                          onChange={(e) => setClientIdentification(e.target.value)}
+                          placeholder="Ex: Dr. João Souza ou Escritório Souza Advogados"
+                          className="w-[400px] transition-colors focus:border-[#0146cf]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <ClientDataForm
                 formData={formData}
                 setFormData={setFormData}
-                phoneRequired={isCommunicationEnabled}
+                phoneRequired={formData.communication}
+                errors={errors}
               />
             </div>
           )}
-          {currentStep === "step-2" && <ClientProcessForm />}
+          {currentStep === "step-2" && <ClientProcessForm
+            setLoading={setLoading}
+            loading={loading}
+            litigationRegister={litigationRegister}
+            setLitigationRegister={setLitigationRegister}
+            litigationRegisterErrors={litigationRegisterErrors}
+            setLitigationRegisterErrors={setLitigationRegisterErrors}
+            isNewProcess={isNewProcess}
+            setIsNewProcess={setIsNewProcess}
+          />}
         </div>
 
         <div className="mt-6 flex justify-between">
@@ -182,9 +230,15 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
             Anterior
           </Button>
           {currentStep === steps[steps.length - 1].id ? (
-            <Button onClick={handleFinish} className="bg-[#0146cf] hover:bg-[#0146cf]/90">
-              Concluir
-            </Button>
+            <PopConfirm
+              title={isNewProcess ? "Há um registro de processo não finalizado" : "Finalizar registro do cliente?"}
+              description={isNewProcess ? "Deseja finalizar e registrar o cliente?" : ""}
+              onConfirm={handleFinish}
+            >
+              <Button className="bg-[#0146cf] hover:bg-[#0146cf]/90">
+                Registrar cliente
+              </Button>
+            </PopConfirm>
           ) : (
             <Button onClick={handleNext} className="bg-[#0146cf] hover:bg-[#0146cf]/90">
               Próximo

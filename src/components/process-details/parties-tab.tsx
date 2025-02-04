@@ -20,7 +20,6 @@ import { toast } from "@/hooks/use-toast"
 import PopConfirm from "../popconfirm"
 import Image from "next/image";
 import NoData from "@/assets/svg/nodata.svg"
-import { tiposParteOptions } from "@/lib/constants/parte-types"
 
 interface PartiesTabProps {
   data: GetLitigation.Result["data"] | null
