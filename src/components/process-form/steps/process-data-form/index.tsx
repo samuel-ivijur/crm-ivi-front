@@ -181,11 +181,11 @@ export function ProcessDataForm({ formData, setFormData, errors }: ProcessDataFo
         <div className="grid md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label htmlFor="alternative">Nº Alternativo</Label>
-            <Input
+            <CustomMaskedInput
               id="alternative"
-              placeholder="Digite o número alternativo"
               value={formData?.caseCover?.alternativeNumber}
               onChange={(e) => setFormData('caseCover', { ...formData.caseCover, alternativeNumber: e.target.value })}
+              mask="1111111-11.1111.1.11.1111"
             />
           </div>
 

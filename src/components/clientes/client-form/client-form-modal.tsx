@@ -16,11 +16,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import PopConfirm from "@/components/popconfirm"
 import { LitigationParams } from "@/services/api/litigations"
-import { beneficiariesService } from "@/services/api/beneficiaries"
 
 interface ClientFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+type Litigation = {
+  id: string
+  processNumber: string
+  instance: number
 }
 
 export interface FormData {
@@ -42,6 +47,7 @@ export interface FormData {
     city: string
     state: string
   }
+  litigations: Litigation[]
 }
 
 type StepId = "step-1" | "step-2"
@@ -95,7 +101,8 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
       neighborhood: '',
       city: '',
       state: ''
-    }
+    },
+    litigations: []
   })
   const [clientIdentification, setClientIdentification] = useState('')
   const [errors, setErrors] = useState<string[]>([])
@@ -218,6 +225,8 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
             setLitigationRegisterErrors={setLitigationRegisterErrors}
             isNewProcess={isNewProcess}
             setIsNewProcess={setIsNewProcess}
+            formData={formData}
+            setFormData={setFormData}
           />}
         </div>
 

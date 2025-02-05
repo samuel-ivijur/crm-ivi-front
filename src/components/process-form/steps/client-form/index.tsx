@@ -12,14 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { UF } from "@/constants"
+import { BeneficiaryQualificationOptions, UF } from "@/constants"
 import { useBeneficiary } from "@/hooks/useBeneficiary"
 import { DebounceCombobox } from "@/components/debounce-combo-box"
 import { useAuth } from "@/hooks/useAuth"
 import { useEffect } from "react"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
-import { tiposParteOptions } from "@/lib/constants/parte-types"
 import CustomMaskedInput from "@/components/masked-input"
 import { useProcessForm } from "@/context/useProcessModalForm"
 
@@ -159,12 +158,12 @@ export function ClientForm() {
                     <SelectValue placeholder="Selecione a qualificação" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tiposParteOptions.map((tipo) => (
+                    {BeneficiaryQualificationOptions.map((option) => (
                       <SelectItem
-                        key={tipo.value}
-                        value={tipo.value.toString()}
+                        key={option.value}
+                        value={option.value.toString()}
                       >
-                        {tipo.label}
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -242,12 +241,12 @@ export function ClientForm() {
                     <SelectValue placeholder="Selecione a qualificação" />
                   </SelectTrigger>
                   <SelectContent>
-                    {tiposParteOptions.map((tipo) => (
+                    {BeneficiaryQualificationOptions.map((option) => (
                       <SelectItem
-                        key={tipo.value}
-                        value={tipo.value.toString()}
+                        key={option.value}
+                        value={option.value.toString()}
                       >
-                        {tipo.label}
+                        {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

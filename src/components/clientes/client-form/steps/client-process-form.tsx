@@ -15,12 +15,7 @@ import NoData from "@/assets/svg/nodata.svg"
 import Image from "next/image"
 import PopConfirm from "@/components/popconfirm"
 import { useAuth } from "@/hooks/useAuth"
-
-type Litigation = {
-  id: string
-  processNumber: string
-  instance: number
-}
+import { FormData } from "../client-form-modal"
 
 const initialLitigationRegister: LitigationParams = {
   processNumber: "",
@@ -37,6 +32,8 @@ type ClientProcessFormProps = {
   setLitigationRegisterErrors: (litigationRegisterErrors: Record<string, string>) => void
   isNewProcess: boolean
   setIsNewProcess: (isNewProcess: boolean) => void
+  formData: FormData
+  setFormData: React.Dispatch<React.SetStateAction<FormData>>
 }
 
 export function ClientProcessForm({
@@ -47,7 +44,9 @@ export function ClientProcessForm({
   litigationRegisterErrors,
   setLitigationRegisterErrors,
   isNewProcess,
-  setIsNewProcess
+  setIsNewProcess,
+  formData,
+  setFormData
 }: ClientProcessFormProps) {
 
   const { getSelectedOrganization } = useAuth()
@@ -55,8 +54,6 @@ export function ClientProcessForm({
     processNumber: "",
     instance: 0,
   })
-
-  const [litigations, setLitigations] = useState<Litigation[]>([])
 
   const handleSearchLitigation = async () => {
     try {
@@ -86,7 +83,7 @@ export function ClientProcessForm({
         toast({
           title: "Atenção",
           description: "Processo não encontrado. Cadastre o processo para continuar.",
-          variant: "default",
+          variant: "warning",
         })
         setLitigationRegister({
           ...initialLitigationRegister,
@@ -99,11 +96,24 @@ export function ClientProcessForm({
         return
       }
 
-      setLitigations((prev) => [...prev, {
-        id: data[0].id,
-        processNumber: data[0].processnumber,
-        instance: data[0].instance ? parseInt(data[0].instance) : 0,
-      }])
+      const litigationAlreadyExists = formData.litigations.find((litigation) => litigation.id === data[0].id)
+      if (litigationAlreadyExists) {
+        toast({
+          title: "Atenção",
+          description: "Processo já inserido.",
+          variant: "warning",
+        })
+        return
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        litigations: [...prev.litigations, {
+          id: data[0].id,
+          processNumber: data[0].processnumber,
+          instance: data[0].instance ? parseInt(data[0].instance) : 0,
+        }],
+      }))
       setLitigationSearch({
         processNumber: "",
         instance: 0,
@@ -156,14 +166,17 @@ export function ClientProcessForm({
         setIsNewProcess(false)
         setLitigationRegister(initialLitigationRegister)
         setLitigationRegisterErrors({})
-        setLitigations((prev) => [
+        setFormData((prev) => ({
           ...prev,
-          {
-            id: data[0].id,
-            processNumber: data[0].processnumber,
-            instance: data[0].instance ? parseInt(data[0].instance) : 0,
-          }
-        ])
+          litigations: [
+            ...prev.litigations,
+            {
+              id: data[0].id,
+              processNumber: data[0].processnumber,
+              instance: data[0].instance ? parseInt(data[0].instance) : 0,
+            }
+          ]
+        }))
         return
       }
 
@@ -171,11 +184,17 @@ export function ClientProcessForm({
         ...litigationRegister,
         idOrganization: getSelectedOrganization(),
       })
-      setLitigations((prev) => [...prev, {
+      setFormData((prev) => ({
+        ...prev,
+        litigations: [
+          ...prev.litigations,
+          {
         id,
         processNumber: litigationRegister.processNumber,
-        instance: litigationRegister.instance,
-      }])
+            instance: litigationRegister.instance,
+          }
+        ]
+      }))
       setLitigationRegister(initialLitigationRegister)
       setLitigationRegisterErrors({})
       setIsNewProcess(false)
@@ -191,7 +210,10 @@ export function ClientProcessForm({
   }
 
   const handleRemoveLitigation = async (id: string) => {
-    setLitigations((prev) => prev.filter((litigation) => litigation.id !== id))
+    setFormData((prev) => ({
+      ...prev,
+      litigations: prev.litigations.filter((litigation) => litigation.id !== id)
+    }))
   }
 
   return (
@@ -285,7 +307,7 @@ export function ClientProcessForm({
         </>
       )}
 
-      {litigations.length > 0 ? litigations.map((litigation) => (
+      {formData.litigations.length > 0 ? formData.litigations.map((litigation) => (
         <Card key={litigation.id}>
           <CardContent style={{ padding: "10px 15px" }} className="flex items-center justify-between">
             <div>{litigation.processNumber}</div>

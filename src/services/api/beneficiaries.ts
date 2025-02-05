@@ -36,6 +36,22 @@ export const beneficiariesService = {
 
     return data;
   },
+  save: async ({ idOrganization, data }: { idOrganization: string; data: Beneficiary; }) => {
+    const response = await fetch(`${API_URL}/beneficiaries`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        idOrganization,
+        ...data,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar beneficiário');
+    }
+    
+  },
   update: async ({ idOrganization, data }: { idOrganization: string; data: Beneficiary; }) => {
     const { id, ...others } = data;
 

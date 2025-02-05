@@ -5,6 +5,8 @@ export const BeneficairyQualification: { [k: string]: number } = {
   author_executed: 4, 
   defendant: 5,
   author: 6,
+  third_interested: 7,
+  legal_representative: 8,
 };
 
 export const BeneficiaryQualificationLabels: { [k: number]: string } = {
@@ -14,9 +16,23 @@ export const BeneficiaryQualificationLabels: { [k: number]: string } = {
   4: 'Autor/Exequente',
   5: 'Réu',
   6: 'Autor',
+  7: 'Terceiro Interessado',
+  8: 'Representante Legal',
 };
 
 export const BeneficiaryStatus = {
   ACTIVE: 1,
   INACTIVE: 2,
 };
+
+const blackList = [
+  BeneficairyQualification.defendant,
+  BeneficairyQualification.author,
+]
+
+export const BeneficiaryQualificationOptions = Object.values(BeneficairyQualification)
+  .filter(qualification => !blackList.includes(qualification))
+  .map(qualification => ({
+    value: qualification,
+    label: BeneficiaryQualificationLabels[qualification],
+  }))
