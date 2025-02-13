@@ -15,7 +15,11 @@ import { ClientProcessForm } from "./steps/client-process-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import PopConfirm from "@/components/popconfirm"
-import { LitigationParams } from "@/services/api/litigations"
+import { LitigationParams, litigationsService } from "@/services/api/litigations"
+import { beneficiariesService } from "@/services/api/beneficiaries"
+import { PersonType } from "@/constants"
+import { useAuth } from "@/hooks/useAuth"
+import { toast } from "@/hooks/use-toast"
 
 interface ClientFormModalProps {
   open: boolean
@@ -36,7 +40,7 @@ export interface FormData {
   birthDate: string
   type?: number
   status: boolean
-  communication: boolean
+  communicate: boolean
   nick?: string
   address: {
     cep: string
@@ -76,35 +80,35 @@ const initialLitigationRegister: LitigationParams = {
   instance: 0,
   caseCover: {},
 }
-
+const initialFormData: FormData = {
+  name: '',
+  document: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  type: undefined,
+  status: true,
+  communicate: false,
+  nick: undefined,
+  address: {
+    cep: '',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: ''
+  },
+  litigations: []
+}
 export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
+  const { getSelectedOrganization } = useAuth()
   const [currentStep, setCurrentStep] = useState<StepId>("step-1")
   const [loading, setLoading] = useState<"search" | "register" | "finish" | null>(null)
   const [isNewProcess, setIsNewProcess] = useState(false)
+  const [formData, setFormData] = useState<FormData>(initialFormData)
   const [litigationRegister, setLitigationRegister] = useState<LitigationParams>(initialLitigationRegister)
   const [litigationRegisterErrors, setLitigationRegisterErrors] = useState<Record<string, string>>({})
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    document: '',
-    email: '',
-    phone: '',
-    birthDate: '',
-    type: undefined,
-    status: true,
-    communication: false,
-    nick: undefined,
-    address: {
-      cep: '',
-      street: '',
-      number: '',
-      complement: '',
-      neighborhood: '',
-      city: '',
-      state: ''
-    },
-    litigations: []
-  })
-  const [clientIdentification, setClientIdentification] = useState('')
   const [errors, setErrors] = useState<string[]>([])
 
   const validate = (): boolean => {
@@ -123,7 +127,7 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
 
   const handleNext = () => {
     if (!validate()) return
-    console.log(formData)
+
     const currentIndex = steps.findIndex(step => step.id === currentStep)
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1].id)
@@ -137,12 +141,54 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
     }
   }
 
+  const resetForm = () => {
+    setFormData(initialFormData)
+    setLitigationRegister(initialLitigationRegister)
+    setLitigationRegisterErrors({})
+    setIsNewProcess(false)
+    setCurrentStep("step-1")
+  }
+
   const handleFinish = async () => {
-    console.log("Form submitted", formData)
-    setLoading("finish")
-    // awai1t beneficiariesService.
-    setLoading(null)
-    onOpenChange(false)
+    try {
+      console.log("Form submitted", formData)
+      setLoading("finish")
+      const { id } = await beneficiariesService.save({
+        idOrganization: getSelectedOrganization(),
+        name: formData.name,
+        document: formData.document || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        idType: formData.type || PersonType.PERSON,
+        birthDate: formData.birthDate || undefined,
+      })
+      await Promise.all(formData.litigations.map(async (litigation) => {
+        await litigationsService.saveLitigationBeneficiary({
+          idOrganization: getSelectedOrganization(),
+          idLitigation: litigation.id,
+          idBeneficiary: id,
+          idQualification: formData.type || PersonType.PERSON,
+          communicate: formData.communicate,
+          nick: formData.nick || '',
+        })
+      }))
+      toast({
+        title: "Finalizado com sucesso",
+        description: "O cliente foi registrado com sucesso",
+        variant: "success"
+      })
+      setLoading(null)
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      console.error("Error saving beneficiary", error)
+      toast({
+        title: "Erro ao registrar cliente",
+        description: "Por favor, tente novamente",
+        variant: "destructive"
+      })
+      setLoading(null)
+    }
   }
 
   return (
@@ -181,25 +227,25 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
                       <span className="block text-sm font-medium">Comunicação</span>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          {formData.communication ? "Habilitada" : "Desabilitada"}
+                          {formData.communicate ? "Habilitada" : "Desabilitada"}
                         </span>
                         <Switch
                           id="communication"
-                          checked={formData.communication}
-                          onCheckedChange={() => setFormData(prev => ({ ...prev, communication: !prev.communication }))}
+                          checked={formData.communicate}
+                          onCheckedChange={() => setFormData(prev => ({ ...prev, communicate: !prev.communicate }))}
                         />
                       </div>
                     </div>
 
-                    {formData.communication && (
+                    {formData.communicate && (
                       <div className="space-y-2">
                         <Label htmlFor="identification" className="text-sm font-medium">
                           Como você quer ser identificado pelo cliente?
                         </Label>
                         <Input
                           id="identification"
-                          value={clientIdentification}
-                          onChange={(e) => setClientIdentification(e.target.value)}
+                          value={formData.nick}
+                          onChange={(e) => setFormData(prev => ({ ...prev, nick: e.target.value }))}
                           placeholder="Ex: Dr. João Souza ou Escritório Souza Advogados"
                           className="w-[400px] transition-colors focus:border-[#0146cf]"
                         />
@@ -211,7 +257,7 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
               <ClientDataForm
                 formData={formData}
                 setFormData={setFormData}
-                phoneRequired={formData.communication}
+                phoneRequired={formData.communicate}
                 errors={errors}
               />
             </div>

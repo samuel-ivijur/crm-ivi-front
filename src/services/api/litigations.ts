@@ -108,6 +108,18 @@ export const litigationsService = {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Erro ao remover parte adversa');
     }
+  },
+  saveLitigationBeneficiary: async ({ idLitigation, ...params }: SaveLitigationBeneficiary.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar beneficiário do processo');
+    }
   }
 }
 
@@ -300,3 +312,13 @@ export interface CreateLitigationParams {
   litigations: LitigationParams[];
 }
 
+export namespace SaveLitigationBeneficiary {
+  export type Params = {
+    idOrganization: string;
+    idLitigation: string;
+    idBeneficiary: string;
+    idQualification: number;
+    communicate: boolean;
+    nick?: string;
+  }
+}

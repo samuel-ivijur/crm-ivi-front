@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import {
   Table,
   TableBody,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Eye, Trash2, MessageSquarePlus, Bell, ChevronDown, ChevronRight, LinkIcon, Loader2 } from 'lucide-react'
+import { Eye, Trash2, ChevronDown, ChevronRight, LinkIcon, Loader2 } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
@@ -28,6 +27,7 @@ import { beneficiariesService } from "@/services/api/beneficiaries"
 import { useAuth } from "@/hooks/useAuth"
 import { toast } from "@/hooks/use-toast"
 import { GetLitigations, litigationsService } from "@/services/api/litigations"
+import { Switch } from "../ui"
 
 type ClientTableProps = {
   data: Beneficiary[]
@@ -41,15 +41,15 @@ enum Actions {
 }
 
 export function ClientTable({ data, refresh }: ClientTableProps) {
-  const router = useRouter()
   const { getSelectedOrganization } = useAuth()
 
   const idOrganization = getSelectedOrganization()
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [isLinkProcessOpen, setIsLinkProcessOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<Beneficiary | null>(null)
-  const [performingAction, setPerformingAction] = useState<{ [k: string]: Actions }>({})
-  const [beneficiaryLitigations, setBeneficiaryLitigations] = useState<{ [k: string]: GetLitigations.LitigationInfo[] | null }>({})
+  const [performingAction, setPerformingAction] = useState<Record<string, Actions>>({})
+  const [beneficiaryLitigations, setBeneficiaryLitigations] = useState<Record<string, GetLitigations.LitigationInfo[] | null>>({})
+  const [litigationCommunicate, setLitigationCommunicate] = useState<Record<string, boolean>>({})
 
   const toggleRow = (clientId: string) => {
     if (!beneficiaryLitigations[clientId]) {
@@ -114,6 +114,11 @@ export function ClientTable({ data, refresh }: ClientTableProps) {
     else if (Object.values(performingAction).length > 0) return "disabled"
     return "iddle"
   }
+
+  useEffect(() => {
+    setBeneficiaryLitigations({})
+    setLitigationCommunicate({})
+  }, [data])
 
   const columns = [
     {
@@ -230,36 +235,6 @@ export function ClientTable({ data, refresh }: ClientTableProps) {
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:text-[#0146cf]"
-                            disabled={getState(client.id) === "disabled"}
-                          >
-                            {getState(client.id, Actions.ADD_COMMUNICATION) === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquarePlus className="h-4 w-4" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Adicionar comunicação</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:text-[#0146cf]"
-                            disabled={getState(client.id) === "disabled"}
-                          >
-                            {getState(client.id, Actions.ADD_MONITORING) === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Adicionar monitoramento</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
                           <PopConfirm
                             title="Excluir cliente"
                             description="Tem certeza que deseja excluir este cliente?"
@@ -308,20 +283,55 @@ export function ClientTable({ data, refresh }: ClientTableProps) {
                                   key={process.id}
                                   className="flex items-center justify-between p-2 bg-white rounded border"
                                 >
-                                  <div className="flex items-center gap-4">
-                                    <span className="font-medium">Nº {process.processnumber}</span>
-                                    <Badge variant="outline">
-                                    {(process.instance && +process.instance < 3) && `${process.instance}ª Instância`}
-                                    {(process.instance && +process.instance === 3) && `Instância superior`}
-                                    </Badge>
+                                  <div className="flex items-center gap-10">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">Nº {process.processnumber}</span>
+                                      <Badge variant="outline">
+                                        {(process.instance && +process.instance < 3) && `${process.instance}ª Instância`}
+                                        {(process.instance && +process.instance === 3) && `Instância superior`}
+                                      </Badge>
+                                    </div>
                                   </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => window.open(`/processos/${process.id}`, '_blank')}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
+
+                                  <div className="flex items-center gap-8">
+                                    <div className="flex items-center gap-2">
+                                      <label htmlFor={`process-monitoring-${process.id}`}>Monitorando</label>
+                                      <Switch
+                                        id={`process-monitoring-${process.id}`}
+                                        onCheckedChange={() => alert("OK")}
+                                      />
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <label htmlFor={`process-communicating-${process.id}`}>Comunicando</label>
+                                      <Switch
+                                        id={`process-communicating-${process.id}`}
+                                        onCheckedChange={() => alert("OK")}
+                                      />
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => window.open(`/processos/${process.id}`, '_blank')}
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+
+                                      <PopConfirm
+                                        title="Remover processo"
+                                        description="Tem certeza que deseja remover este processo vinculado ao cliente?"
+                                        onConfirm={async () => alert("OK")}
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                        >
+                                          <Trash2 />
+                                        </Button>
+                                      </PopConfirm>
+                                    </div>
+                                  </div>
                                 </div>
                               ))}
                             </div>

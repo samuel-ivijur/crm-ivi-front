@@ -36,21 +36,24 @@ export const beneficiariesService = {
 
     return data;
   },
-  save: async ({ idOrganization, data }: { idOrganization: string; data: Beneficiary; }) => {
+  save: async (params: SaveBeneficiaryParams): Promise<SaveBeneficiaryResult> => {
     const response = await fetch(`${API_URL}/beneficiaries`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        idOrganization,
-        ...data,
-      }),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Erro ao salvar beneficiário');
     }
-    
+
+    console.log("response", response)
+    const data: SaveBeneficiaryResult = await response.json();
+
+    console.log("data", data)
+
+    return data;
   },
   update: async ({ idOrganization, data }: { idOrganization: string; data: Beneficiary; }) => {
     const { id, ...others } = data;
@@ -101,6 +104,20 @@ export interface GetBeneficiariesParams {
   searchTerm?: string;
 }
 
+interface SaveBeneficiaryParams {
+  idOrganization: string;
+  name: string;
+  idType: number;
+  document?: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+}
+
+interface SaveBeneficiaryResult {
+  id: string;
+}
+
 interface ListBeneficiariesResult {
   beneficiaries: Omit<Beneficiary, 'idQualification'>[];
   total: number;
@@ -121,3 +138,4 @@ export interface ReportBeneficiaryResult {
     notAccepted: number;
   };
 }
+

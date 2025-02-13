@@ -19,6 +19,12 @@ export default function ClientesPage() {
   } = useBeneficiary()
   const { getSelectedOrganization } = useAuth();
 
+  const handleFinishRegisterModal = (open: boolean) => {
+    setIsModalOpen(open)
+    if (!open) {
+      invalidateBeneficiariesQuery()
+    }
+  }
    useEffect(() => {
     const idOrganization = getSelectedOrganization()
     changeBeneficiaryFilter({ idOrganization })
@@ -68,7 +74,7 @@ export default function ClientesPage() {
 
       <ClientFormModal 
         open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        onOpenChange={handleFinishRegisterModal}
       />
     </div>
   )
