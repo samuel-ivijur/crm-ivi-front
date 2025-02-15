@@ -21,4 +21,5 @@ export interface Beneficiary {
   idCommunicationStatus: number;
   document?: string;
   email?: string;
+  birthDate?: string;
 }

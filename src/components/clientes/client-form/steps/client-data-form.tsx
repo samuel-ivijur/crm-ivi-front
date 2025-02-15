@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { FormData } from "../client-form-modal"
 import { PersonType, UF } from "@/constants"
 import CustomMaskedInput from "@/components/masked-input"
 import { toast } from "@/hooks/use-toast"
+import { FormData } from "../types"
 
 interface ClientDataFormProps {
   formData: FormData

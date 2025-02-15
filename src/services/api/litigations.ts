@@ -115,10 +115,39 @@ export const litigationsService = {
       headers,
       body: JSON.stringify(params),
     });
+  },
+  updateBeneficiaryCommunication: async ({ idOrganization, idLitigation, idBeneficiary, communicate }: UpdateBeneficiaryCommunication.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary/${idBeneficiary}/communicate/${communicate}?idOrganization=${idOrganization}`, {
+      method: 'PATCH',
+      headers,
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao salvar beneficiário do processo');
+      throw new Error(errorData.message || 'Erro ao atualizar comunicação do beneficiário do processo');
+    }
+  },
+  updateLitigationMonitoring: async ({ idOrganization, idLitigation, monitore, idType }: UpdateLitigationMonitoring.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/monitoring`, {
+      method: 'PUT',  
+      headers,
+      body: JSON.stringify({ idOrganization, monitore, idType }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao atualizar monitoramento do processo');
+    }
+  },
+  deleteLitigationBeneficiary: async ({ idOrganization, idLitigation, idBeneficiary }: DeleteLitigationBeneficiary.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary/${idBeneficiary}?idOrganization=${idOrganization}`, {
+      method: 'DELETE',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao excluir beneficiário do processo');
     }
   }
 }
@@ -163,10 +192,18 @@ export namespace GetLitigations {
       description: string;
     };
   }
+  export type LitigationMonitoring = {
+    id: string;
+    monitoring: boolean;
+    type: {
+      id: number;
+      description: string;
+    };
+  }
   export type LitigationInfo = {
     id: string;
     processnumber: string;
-    instance: string | null;
+    instance: number;
     court: string;
     obs: string;
     nick: string;
@@ -194,6 +231,7 @@ export namespace GetLitigations {
     adverseParties: AdverseParty[]
     tasks: Task[]
     idRelatedProcessesGroup: number;
+    monitoring: LitigationMonitoring[]
     case_cover: {
       id?: number,
       distribution_type?: string,
@@ -216,7 +254,18 @@ export namespace GetLitigations {
     cadaster: {
       id: number;
       description: string;
-    };
+    }
+    beneficiaries: {
+      id: string;
+      name: string;
+      communicate: boolean;
+      phone?: string;
+      nick?: string;
+      qualification: {
+        id: number;
+        description: string;
+      };
+    }[]
   }
 }
 
@@ -320,5 +369,31 @@ export namespace SaveLitigationBeneficiary {
     idQualification: number;
     communicate: boolean;
     nick?: string;
+  }
+}
+
+export namespace UpdateBeneficiaryCommunication {
+  export type Params = {
+    idOrganization: string;
+    idLitigation: string;
+    idBeneficiary: string;
+    communicate: boolean;
+  }
+}
+
+export namespace UpdateLitigationMonitoring {
+  export type Params = {
+    idOrganization: string;
+    idLitigation: string;
+    monitore: boolean;
+    idType: number;
+  }
+}
+
+export namespace DeleteLitigationBeneficiary {
+  export type Params = {
+    idOrganization: string;
+    idLitigation: string;
+    idBeneficiary: string;
   }
 }

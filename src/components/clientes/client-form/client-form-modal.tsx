@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Dispatch, SetStateAction, useMemo, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -20,60 +20,15 @@ import { beneficiariesService } from "@/services/api/beneficiaries"
 import { PersonType } from "@/constants"
 import { useAuth } from "@/hooks/useAuth"
 import { toast } from "@/hooks/use-toast"
+import { FormData, StepId, steps } from "./types"
 
 interface ClientFormModalProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (open: boolean, finish?: boolean) => void
+  beneficiary?: FormData & { id: string }
+  setCurrentStep: Dispatch<SetStateAction<StepId>>
+  currentStep: StepId
 }
-
-type Litigation = {
-  id: string
-  processNumber: string
-  instance: number
-}
-
-export interface FormData {
-  name: string
-  document: string
-  email: string
-  phone: string
-  birthDate: string
-  type?: number
-  status: boolean
-  communicate: boolean
-  nick?: string
-  address: {
-    cep: string
-    street: string
-    number: string
-    complement: string
-    neighborhood: string
-    city: string
-    state: string
-  }
-  litigations: Litigation[]
-}
-
-type StepId = "step-1" | "step-2"
-
-interface Step {
-  id: StepId
-  name: string
-  fields: string[]
-}
-
-const steps: Step[] = [
-  {
-    id: "step-1",
-    name: "Dados do Cliente",
-    fields: ["name", "document", "email", "phone", "birthDate", "type", "address"]
-  },
-  {
-    id: "step-2",
-    name: "Vincular Processo",
-    fields: ["processNumber", "instance"]
-  }
-]
 
 const initialLitigationRegister: LitigationParams = {
   processNumber: "",
@@ -101,9 +56,8 @@ const initialFormData: FormData = {
   },
   litigations: []
 }
-export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
+export function ClientFormModal({ open, onOpenChange, beneficiary, setCurrentStep, currentStep }: ClientFormModalProps) {
   const { getSelectedOrganization } = useAuth()
-  const [currentStep, setCurrentStep] = useState<StepId>("step-1")
   const [loading, setLoading] = useState<"search" | "register" | "finish" | null>(null)
   const [isNewProcess, setIsNewProcess] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialFormData)
@@ -147,26 +101,43 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
     setLitigationRegisterErrors({})
     setIsNewProcess(false)
     setCurrentStep("step-1")
+    setErrors([])
   }
 
   const handleFinish = async () => {
     try {
-      console.log("Form submitted", formData)
       setLoading("finish")
-      const { id } = await beneficiariesService.save({
-        idOrganization: getSelectedOrganization(),
-        name: formData.name,
-        document: formData.document || undefined,
-        email: formData.email || undefined,
-        phone: formData.phone || undefined,
-        idType: formData.type || PersonType.PERSON,
-        birthDate: formData.birthDate || undefined,
-      })
+      let idBeneficiary = ""
+      if (beneficiary?.id) {
+        idBeneficiary = beneficiary.id
+        console.log("formData", formData)
+        await beneficiariesService.update({
+          idOrganization: getSelectedOrganization(),
+          id: beneficiary.id,
+          name: formData.name,
+          document: formData.document || undefined,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          idType: formData.type || PersonType.PERSON,
+          birthDate: formData.birthDate || undefined,
+        })
+      } else {
+        const response = await beneficiariesService.save({
+          idOrganization: getSelectedOrganization(),
+          name: formData.name,
+          document: formData.document || undefined,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          idType: formData.type || PersonType.PERSON,
+          birthDate: formData.birthDate || undefined,
+        })
+        idBeneficiary = response.id
+      }
       await Promise.all(formData.litigations.map(async (litigation) => {
         await litigationsService.saveLitigationBeneficiary({
           idOrganization: getSelectedOrganization(),
           idLitigation: litigation.id,
-          idBeneficiary: id,
+          idBeneficiary,
           idQualification: formData.type || PersonType.PERSON,
           communicate: formData.communicate,
           nick: formData.nick || '',
@@ -178,7 +149,7 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
         variant: "success"
       })
       setLoading(null)
-      onOpenChange(false)
+      onOpenChange(false, true)
       resetForm()
     } catch (error) {
       console.error("Error saving beneficiary", error)
@@ -191,11 +162,24 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
     }
   }
 
+  useMemo(() => {
+    console.log("id", beneficiary?.id)
+    resetForm()
+    if (beneficiary) {
+      setFormData(beneficiary)
+    }
+  }, [beneficiary?.id])
+
+  useMemo(() => {
+    console.log("beneficiary", beneficiary)
+    
+  }, [beneficiary])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl">
         <DialogHeader>
-          <DialogTitle>Cadastro de Cliente</DialogTitle>
+          <DialogTitle>{beneficiary?.id ? "Editar" : "Cadastro de"} Cliente</DialogTitle>
         </DialogHeader>
 
         <ClientFormStepper
@@ -286,12 +270,12 @@ export function ClientFormModal({ open, onOpenChange }: ClientFormModalProps) {
           </Button>
           {currentStep === steps[steps.length - 1].id ? (
             <PopConfirm
-              title={isNewProcess ? "Há um registro de processo não finalizado" : "Finalizar registro do cliente?"}
-              description={isNewProcess ? "Deseja finalizar e registrar o cliente?" : ""}
+              title={isNewProcess ? "Há um registro de processo não finalizado" : `Finalizar ${beneficiary?.id ? "edição" : "cadastro"} do cliente?`}
+              description={isNewProcess ? `Deseja finalizar e ${beneficiary?.id ? "editar os dados do" : "registrar o"} cliente?` : ""}
               onConfirm={handleFinish}
             >
-              <Button className="bg-[#0146cf] hover:bg-[#0146cf]/90">
-                Registrar cliente
+              <Button className="bg-[#0146cf] hover:bg-[#0146cf]/90" loading={loading === "finish"}>
+                {beneficiary?.id ? "Editar dados do cliente" : "Registrar cliente"}
               </Button>
             </PopConfirm>
           ) : (

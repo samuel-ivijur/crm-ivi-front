@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { litigationTableColumns } from "./columns"
 import { LitigationDataTableToolbar } from "./data-table-toolbar"
 import { GetLitigations } from "@/services/api/litigations"
@@ -31,7 +31,7 @@ export function LitigationTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const { getAllLitigationsQuery, filter, changeFilter, invalidateQuery } = useLitigation()
+  const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
 
   const table = useReactTable<GetLitigations.LitigationInfo>({
     data: getAllLitigationsQuery.data?.data || [],

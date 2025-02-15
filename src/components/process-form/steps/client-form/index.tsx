@@ -35,10 +35,10 @@ interface AddressData {
 }
 
 export function ClientForm() {
-  const { formData, updateFormData, errors } = useProcessForm()
-  const { getBeneficiariesQuery, changeFilter } = useBeneficiary()
-  const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
   const { getSelectedOrganization } = useAuth();
+  const { formData, updateFormData, errors } = useProcessForm()
+  const { getBeneficiariesQuery, changeFilter } = useBeneficiary(getSelectedOrganization())
+  const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
 
   const [birthDate, setBirthDate] = useState('')
 
@@ -62,8 +62,7 @@ export function ClientForm() {
   }
 
   const handleFetchBeneficiary = async (value: string): Promise<void> => {
-    const idOrganization = getSelectedOrganization()
-    changeFilter({ searchTerm: value, idOrganization })
+    changeFilter({ searchTerm: value, idOrganization: getSelectedOrganization() })
   }
 
   const fetchAddress = async () => {

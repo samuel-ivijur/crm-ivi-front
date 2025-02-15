@@ -25,6 +25,11 @@ export const BeneficiaryStatus = {
   INACTIVE: 2,
 };
 
+export const BeneficiaryStatusLabels: { [k: number]: string } = {
+  1: 'Ativo',
+  2: 'Inativo',
+};
+
 const blackList = [
   BeneficairyQualification.defendant,
   BeneficairyQualification.author,

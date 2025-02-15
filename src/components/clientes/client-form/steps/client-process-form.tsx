@@ -15,7 +15,7 @@ import NoData from "@/assets/svg/nodata.svg"
 import Image from "next/image"
 import PopConfirm from "@/components/popconfirm"
 import { useAuth } from "@/hooks/useAuth"
-import { FormData } from "../client-form-modal"
+import { FormData } from "../types"
 
 const initialLitigationRegister: LitigationParams = {
   processNumber: "",
@@ -111,7 +111,7 @@ export function ClientProcessForm({
         litigations: [...prev.litigations, {
           id: data[0].id,
           processNumber: data[0].processnumber,
-          instance: data[0].instance ? parseInt(data[0].instance) : 0,
+          instance: data[0].instance ? +data[0].instance : 0,
         }],
       }))
       setLitigationSearch({
@@ -173,7 +173,7 @@ export function ClientProcessForm({
             {
               id: data[0].id,
               processNumber: data[0].processnumber,
-              instance: data[0].instance ? parseInt(data[0].instance) : 0,
+              instance: data[0].instance ? +data[0].instance : 0,
             }
           ]
         }))
@@ -227,7 +227,7 @@ export function ClientProcessForm({
           <Switch
             id="new-process"
             checked={isNewProcess}
-            onCheckedChange={setIsNewProcess}
+            onCheckedChange={(checked) => setIsNewProcess(checked)}
             className="data-[state=checked]:bg-[#0146cf]"
           />
         </div>

@@ -1,15 +1,21 @@
 "use client"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { QUERY_KEYS } from "@/constants/cache";
 import { useSearchParamsPersist } from "./useSearchParamsPersist";
 import { beneficiariesService, GetBeneficiariesParams } from "@/services/api/beneficiaries";
 
-export function useBeneficiary() {
+export function useBeneficiary(idOrganization: string) {
+    const INITIAL_PARAMS = useRef<GetBeneficiariesParams>({
+        page: 1,
+        limit: 10,
+        idOrganization,
+    });
     const queryClient = useQueryClient();
     const { paramsPersisted, setSearchParamsPersist, resetParams } =
         useSearchParamsPersist<GetBeneficiariesParams>({
             prefix: 'beneficiary',
+            initialParams: INITIAL_PARAMS.current,
         });
 
     const changeFilter = (params: Partial<GetBeneficiariesParams>): void => {
@@ -27,9 +33,9 @@ export function useBeneficiary() {
     });
 
     const reportBeneficiaryQuery = useQuery({
-        queryKey: [QUERY_KEYS.BENEFICIARIES_REPORT, paramsPersisted],
+        queryKey: [QUERY_KEYS.BENEFICIARIES_REPORT, idOrganization],
         queryFn: async () => {
-            const data = await beneficiariesService.report(paramsPersisted);
+            const data = await beneficiariesService.report({ idOrganization });
             return data;
         },
         staleTime: 1000 * 60 * 5,

@@ -10,6 +10,7 @@ import PopConfirm from "../popconfirm"
 import { Beneficiary } from "@/types/beneficiarie"
 import { Skeleton } from "../ui/skeleton"
 import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/useAuth"
 
 interface ClientTabProps {
   data: GetLitigation.Result["data"] | null
@@ -18,6 +19,7 @@ interface ClientTabProps {
 }
 
 export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabProps) {
+  const { getSelectedOrganization } = useAuth();
   const [isNewClient, setIsNewClient] = useState(false)
   const [idBeneficiary, setIdBeneficiary] = useState<string | null>(null)
   const [idQualification, setIdQualification] = useState<number | null>(null)
@@ -30,7 +32,7 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
     email: '',
   })
   const [isSaving, setIsSaving] = useState(false)
-  const { getBeneficiariesQuery, changeFilter } = useBeneficiary()
+  const { getBeneficiariesQuery, changeFilter } = useBeneficiary(getSelectedOrganization())
 
   const handleCancel = async () => {
     setIsNewClient(true)

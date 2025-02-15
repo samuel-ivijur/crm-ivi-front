@@ -42,3 +42,9 @@ export enum LitigationStatus {
     [LitigationLinkStatus.VALIDATING]: 'yellow',
   };
   
+  export enum LitigationMonitoringType {
+    PUBLICATIONS = 1,
+  }
+  
+  
+  

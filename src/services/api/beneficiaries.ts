@@ -8,9 +8,15 @@ const headers = {
 };
 
 export const beneficiariesService = {
-  findAll: async (params: GetBeneficiariesParams): Promise<ListBeneficiariesResult> => {
+  findAll: async ({ ids, ...params }: GetBeneficiariesParams): Promise<ListBeneficiariesResult> => {
     const queryParams = new URLSearchParams(params as any).toString();
-    const response = await fetch(`${API_URL}/beneficiaries?${queryParams}`, {
+    const idsParams = Array.isArray(ids) && ids.length > 0 ? ids.map(id => `ids[]=${id}`).join('&') : '';
+    let url = `${API_URL}/beneficiaries?${queryParams}`
+    if (idsParams) {
+      const prefix = url.at(-1) === '?' ? '' : '&';
+      url += `${prefix}${idsParams}`
+    }
+    const response = await fetch(url, {
       method: 'GET',
       headers,
     });
@@ -55,16 +61,12 @@ export const beneficiariesService = {
 
     return data;
   },
-  update: async ({ idOrganization, data }: { idOrganization: string; data: Beneficiary; }) => {
-    const { id, ...others } = data;
-
+  update: async ({ id, ...params }: SaveBeneficiaryParams & { id: string }) => {
+    console.log("params", params)
     const response = await fetch(`${API_URL}/beneficiaries/${id}`, {
       method: 'PUT',
       headers,
-      body: JSON.stringify({
-        idOrganization,
-        ...others,
-      }),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) {
@@ -83,7 +85,7 @@ export const beneficiariesService = {
       throw new Error(errorData.message || 'Erro ao excluir beneficiário');
     }
   },
-  report: async ({ idOrganization }: { idOrganization: string; }): Promise<ReportBeneficiaryResult> => {
+  report: async ({ idOrganization }: { idOrganization?: string; }): Promise<ReportBeneficiaryResult> => {
     const response = await fetch(`${API_URL}/beneficiaries/report?idOrganization=${idOrganization}`, {
       method: 'GET',
       headers,
@@ -100,8 +102,17 @@ export const beneficiariesService = {
 };
 
 export interface GetBeneficiariesParams {
-  idOrganization: string;
+  idOrganization?: string;
   searchTerm?: string;
+  page?: number;
+  limit?: number;
+  ids?: string[];
+  idStatus?: number;
+  idType?: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  document?: string;
 }
 
 interface SaveBeneficiaryParams {
