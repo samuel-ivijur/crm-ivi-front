@@ -17,6 +17,7 @@ import { GetLitigations, litigationsService } from "@/services/api/litigations"
 import { Switch } from "../ui"
 import Pagination from "../pagination"
 import { StepId } from "./client-form/types"
+import ConfirmModal from "../confirm-modal"
 
 type ClientTableProps = {
   data: Beneficiary[]
@@ -65,7 +66,7 @@ export function ClientTable({
 
   const idOrganization = getSelectedOrganization()
   const [performingAction, setPerformingAction] = useState<Record<string, Actions>>({})
-
+  const [performChangeMonitoringData, setPerformChangeMonitoringData] = useState<{ idLitigation: string | null, checked: boolean }>({ idLitigation: null, checked: false })
   const getLitigationBeneficiary = (idBeneficiary: string) => litigationsService.getLitigations({
     idOrganization: getSelectedOrganization(),
     limit: 100,
@@ -173,7 +174,7 @@ export function ClientTable({
     return litigationMonitoring[idLitigation] || { monitoring: false }
   }
 
-  const handleChangeMonitoring = async (idLitigation: string, checked: boolean) => {
+  const performChangeMonitoring = async (idLitigation: string, checked: boolean) => {
     try {
       if (!litigationMonitoring[idLitigation]) {
         litigationMonitoring[idLitigation] = { id: idLitigation, monitoring: checked, type: { id: LitigationMonitoringType.PUBLICATIONS, description: "Publicações" } }
@@ -183,7 +184,7 @@ export function ClientTable({
       })
       await litigationsService.updateLitigationMonitoring({
         idOrganization,
-        idLitigation: idLitigation,
+        idLitigation,
         monitore: checked,
         idType: LitigationMonitoringType.PUBLICATIONS
       })
@@ -202,6 +203,21 @@ export function ClientTable({
     } finally {
       setPerformingAction({})
     }
+  }
+
+  const handleChangeMonitoring = async (idLitigation: string, checked: boolean) => {
+    setPerformingAction({
+      [idLitigation]: Actions.ADD_MONITORING
+    })
+
+    if (!checked) {
+      const isMoreThanOneBeneficiary = await litigationsService.findLitigationBeneficiary({
+        idOrganization,
+        idLitigation
+      })
+      if (isMoreThanOneBeneficiary.total > 1) return setPerformChangeMonitoringData({ idLitigation, checked })
+    }
+    await performChangeMonitoring(idLitigation, checked)
   }
 
   const handleChangeCommunicate = async (idLitigation: string, idBeneficiary: string, checked: boolean) => {
@@ -566,6 +582,19 @@ export function ClientTable({
       <div className="mt-4">
         <PagePagination />
       </div>
+      <ConfirmModal
+        title="Alterar monitoramento"
+        description="Este processo possui mais de um cliente vinculado, a alteração irá impactar no monitoramento para todos os clientes. Deseja continuar?"
+        onConfirm={async () => {
+          if (!performChangeMonitoringData.idLitigation) return
+          await performChangeMonitoring(performChangeMonitoringData.idLitigation, performChangeMonitoringData.checked)
+        }}
+        open={performChangeMonitoringData.idLitigation !== null}
+        onClose={() => {
+          setPerformingAction({})
+          setPerformChangeMonitoringData({ idLitigation: null, checked: false })
+        }}
+      />
     </>
   )
 } 

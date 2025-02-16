@@ -116,6 +116,19 @@ export const litigationsService = {
       body: JSON.stringify(params),
     });
   },
+  findLitigationBeneficiary: async ({ idLitigation, idOrganization }: FindLitigationBeneficiary.Params): Promise<FindLitigationBeneficiary.Result> => {
+    const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary?idOrganization=${idOrganization}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao encontrar beneficiário do processo');
+    }
+
+    return await response.json()
+  },
   updateBeneficiaryCommunication: async ({ idOrganization, idLitigation, idBeneficiary, communicate }: UpdateBeneficiaryCommunication.Params): Promise<void> => {
     const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary/${idBeneficiary}/communicate/${communicate}?idOrganization=${idOrganization}`, {
       method: 'PATCH',
@@ -129,7 +142,7 @@ export const litigationsService = {
   },
   updateLitigationMonitoring: async ({ idOrganization, idLitigation, monitore, idType }: UpdateLitigationMonitoring.Params): Promise<void> => {
     const response = await fetch(`${API_URL}/litigations/${idLitigation}/monitoring`, {
-      method: 'PUT',  
+      method: 'PUT',
       headers,
       body: JSON.stringify({ idOrganization, monitore, idType }),
     });
@@ -395,5 +408,22 @@ export namespace DeleteLitigationBeneficiary {
     idOrganization: string;
     idLitigation: string;
     idBeneficiary: string;
+  }
+}
+
+export namespace FindLitigationBeneficiary {
+  export type Params = {
+    idOrganization: string;
+    idLitigation: string;
+  }
+  export type Result = {
+    data: {
+      id: string;
+      beneficiary: {
+        id: string;
+        name: string;
+      };
+    }[]
+    total: number;
   }
 }
