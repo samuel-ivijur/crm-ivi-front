@@ -54,12 +54,21 @@ export const beneficiariesService = {
       throw new Error(errorData.message || 'Erro ao salvar beneficiário');
     }
 
-    console.log("response", response)
     const data: SaveBeneficiaryResult = await response.json();
 
-    console.log("data", data)
-
     return data;
+  },
+  saveBulk: async (params: SaveBeneficiaryBulkParams): Promise<void> => {
+    const response = await fetch(`${API_URL}/beneficiaries/bulk`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar beneficiário');
+    }
   },
   update: async ({ id, ...params }: SaveBeneficiaryParams & { id: string }) => {
     console.log("params", params)
@@ -115,14 +124,22 @@ export interface GetBeneficiariesParams {
   document?: string;
 }
 
-interface SaveBeneficiaryParams {
-  idOrganization: string;
+interface BeneficiaryParams {
   name: string;
   idType: number;
   document?: string;
   email?: string;
   phone?: string;
   birthDate?: string;
+}
+
+export interface SaveBeneficiaryParams extends BeneficiaryParams {
+  idOrganization: string;
+}
+
+export interface SaveBeneficiaryBulkParams {
+  idOrganization: string;
+  beneficiaries: BeneficiaryParams[];
 }
 
 interface SaveBeneficiaryResult {

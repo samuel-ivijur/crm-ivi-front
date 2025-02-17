@@ -14,11 +14,16 @@ import { toPhone } from "@/utils/format"
 import { GetLitigations, litigationsService } from "@/services/api/litigations"
 import { toast } from "@/hooks/use-toast"
 import { BeneficiaryDataTableToolbar } from "@/components/clientes/data-table-toolbar"
+import ModalImportData from "@/components/modal-import-data/modal-import-data"
+import { beneficiariesService, SaveBeneficiaryBulkParams, SaveBeneficiaryParams } from "@/services/api/beneficiaries"
+import { importClientColumns } from "./import-client-columns"
+import { PersonType } from "@/constants"
+import { normalizeString } from "@/utils/str"
 
 export default function ClientesPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalClientOpen, setIsModalClientOpen] = useState(false)
+  const [isModalImportOpen, setIsModalImportOpen] = useState(false)
   const { getSelectedOrganization } = useAuth();
-
   const {
     getBeneficiariesQuery,
     changeFilter: changeBeneficiaryFilter,
@@ -33,9 +38,9 @@ export default function ClientesPage() {
   const [litigationMonitoring, setLitigationMonitoring] = useState<Record<string, GetLitigations.LitigationMonitoring>>({})
   const [currentModalBeneficiaryStep, setCurrentModalBeneficiaryStep] = useState<StepId>("step-1")
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
-  
+
   const handleFinishRegisterModal = (open: boolean, finish?: boolean) => {
-    setIsModalOpen(open)
+    setIsModalClientOpen(open)
     if (!open && finish) {
       invalidateBeneficiariesQuery()
       if (selectedBeneficiary?.id) resetRow(selectedBeneficiary?.id)
@@ -45,7 +50,7 @@ export default function ClientesPage() {
 
   const handleAddClient = () => {
     setSelectedBeneficiary(null)
-    setIsModalOpen(true)
+    setIsModalClientOpen(true)
   }
 
   const resetRow = (idBeneficiary: string) => {
@@ -79,7 +84,7 @@ export default function ClientesPage() {
         })
         setTimeout(() => {
           setCurrentModalBeneficiaryStep(page)
-          setIsModalOpen(true)
+          setIsModalClientOpen(true)
           resolve()
         }, 100)
       } catch (error) {
@@ -110,6 +115,40 @@ export default function ClientesPage() {
     resetParams()
   }
 
+  const handleFinishImport = async (
+    rows: Array<{ [k: string]: string }>,
+    expectedColumnsToRows: { [k: string]: string },
+  ): Promise<boolean> => {
+
+    const params: SaveBeneficiaryBulkParams = {
+      idOrganization: getSelectedOrganization(),
+      beneficiaries: rows.map(row => {
+        const idType = ['pessoa juridica', 'pj', 'juridica', 'pessoa_juridica']
+          .includes(normalizeString(row[expectedColumnsToRows[importClientColumns.type]])) 
+          ? PersonType.COMPANY : PersonType.PERSON
+
+        return {
+          idType,
+          name: row[expectedColumnsToRows[importClientColumns.name]],
+          document: String(row[expectedColumnsToRows[importClientColumns.document]]).replace(/\D/g, ''),
+          phone: String(row[expectedColumnsToRows[importClientColumns.phone]]).replace(/\D/g, ''),
+          email: row[expectedColumnsToRows[importClientColumns.email]],
+        }
+      }),
+    }
+  
+    await beneficiariesService.saveBulk(params);
+    toast({
+      title: "Clientes importados com sucesso",
+      description: "Os clientes foram importados com sucesso",
+    })
+    setIsModalImportOpen(false)
+    setTimeout(() => {
+      invalidateBeneficiariesQuery()
+    }, 1000)
+    return true;
+  };
+
   useEffect(() => {
     resetFilters()
   }, [])
@@ -126,7 +165,7 @@ export default function ClientesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Lista de Clientes</h1>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => setIsModalImportOpen(true)}>
             <Download className="h-4 w-4" />
             Importar Planilha
           </Button>
@@ -179,7 +218,7 @@ export default function ClientesPage() {
       </div>
 
       <ClientFormModal
-        open={isModalOpen}
+        open={isModalClientOpen}
         onOpenChange={handleFinishRegisterModal}
         setCurrentStep={setCurrentModalBeneficiaryStep}
         currentStep={currentModalBeneficiaryStep}
@@ -205,6 +244,45 @@ export default function ClientesPage() {
           },
           nick: '',
         } : undefined}
+      />
+      <ModalImportData
+        isModalOpen={isModalImportOpen}
+        setIsModalOpen={setIsModalImportOpen}
+        title="Importar Clientes"
+        expectedColumns={[
+          {
+            key: importClientColumns.name,
+            example: 'Nome do Cliente',
+            previewWidth: 100,
+            variant: ['Nome do Cliente', 'Name'],
+          },
+          {
+            key: importClientColumns.document,
+            example: '111.111.111-11',
+            previewWidth: 100,
+            variant: ['CPF', 'Document', 'CNPJ'],
+          },
+          {
+            key: importClientColumns.email,
+            example: 'exemplo@email.com',
+            previewWidth: 100,
+            variant: ['Email do Cliente', 'E-mail'],
+          },
+          {
+            key: importClientColumns.phone,
+            example: '(31) 99999-9999',
+            previewWidth: 100,
+            variant: ['Telefone do Cliente', 'Phone', 'Celular', 'Contato'],
+          },
+          {
+            key: importClientColumns.type,
+            example: 'Pessoa Física',
+            previewWidth: 100,
+            variant: ['Type', 'Pessoa'],
+          },
+        ]}
+        finish={handleFinishImport}
+        docExampleUrl={""}
       />
     </div>
   )

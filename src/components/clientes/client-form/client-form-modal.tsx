@@ -110,7 +110,6 @@ export function ClientFormModal({ open, onOpenChange, beneficiary, setCurrentSte
       let idBeneficiary = ""
       if (beneficiary?.id) {
         idBeneficiary = beneficiary.id
-        console.log("formData", formData)
         await beneficiariesService.update({
           idOrganization: getSelectedOrganization(),
           id: beneficiary.id,
@@ -163,17 +162,11 @@ export function ClientFormModal({ open, onOpenChange, beneficiary, setCurrentSte
   }
 
   useMemo(() => {
-    console.log("id", beneficiary?.id)
     resetForm()
     if (beneficiary) {
       setFormData(beneficiary)
     }
   }, [beneficiary?.id])
-
-  useMemo(() => {
-    console.log("beneficiary", beneficiary)
-    
-  }, [beneficiary])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
