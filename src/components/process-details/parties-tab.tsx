@@ -147,13 +147,13 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         await litigationsService.removeAdverseParty({
           id: data!.id,
           idAdverseParty: selectedParty!.id,
-          idOrganization: data!.organizationid,
+          idOrganization: data!.organization.id,
         })
         invalidateLitigation(data!.id)
       }
       await litigationsService.addAdverseParty({
         idLitigation: data!.id,
-        idOrganization: data!.organizationid,
+        idOrganization: data!.organization.id,
         adverseParty: {
           name: selectedParty!.name,
           document: selectedParty?.document || '',
@@ -190,7 +190,7 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         await litigationsService.removeAdverseParty({
           id: data!.id,
           idAdverseParty: selectedParty!.id,
-          idOrganization: data!.organizationid,
+          idOrganization: data!.organization.id,
         })
         invalidateLitigation(data!.id)
       }

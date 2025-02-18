@@ -93,20 +93,20 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
   const parseDataToFormData = (data: GetLitigation.Result["data"]) => {
     setFormData({
-      isActive: data.idstatus === LitigationStatus.ACTIVE,
+      isActive: data.status.id === LitigationStatus.ACTIVE,
       cnj: data.processnumber || '',
-      alternative: data.case_cover?.alternative_number || '',
+      alternative: data.caseCover?.alternativeNumber || '',
       instance: String(data.instance || ''),
-      distributionDate: data.case_cover?.distribution_date || '',
-      distributionType: data.case_cover?.distribution_type || '',
-      area: data.case_cover?.area || '',
-      subject: data.case_cover?.subject || '',
-      extraSubject: data.case_cover?.extra_subject || '',
-      court: data.case_cover?.court || '',
-      courtSystem: data.case_cover?.court_system || '',
-      causeValue: data.case_cover?.cause_value || '',
+      distributionDate: data.caseCover?.distributionDate || '',
+      distributionType: data.caseCover?.distributionType || '',
+      area: data.caseCover?.area || '',
+      subject: data.caseCover?.subject || '',
+      extraSubject: data.caseCover?.extraSubject || '',
+      court: data.caseCover?.court || '',
+      courtSystem: data.caseCover?.courtSystem || '',
+      causeValue: data.caseCover?.causeValue ? String(data.caseCover?.causeValue) : '',
       classes: ['Promessa de Compra e Venda / Coisas C/C'],
-      uf: data?.iduf || null,
+      uf: data?.uf?.id || null,
       county: ''
     })
   }
@@ -142,7 +142,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
       })
       await litigationsService.editLitigation({
         id: data.id,
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
         idStatus: formData.isActive ? LitigationStatus.ACTIVE : LitigationStatus.ARCHIVED,
         caseCover: {
           alternativeNumber: formData?.alternative || '',
@@ -153,7 +153,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
           extraSubject: formData?.extraSubject || '',
           idCourt: formData?.court ? +formData.court : undefined,
           idCourtSystem: formData?.courtSystem ? +formData.courtSystem : undefined,
-          claimValue: formData?.causeValue || '',
+          claimValue: formData?.causeValue ? String((Math.ceil(+(formData.causeValue).replace(/\D/g,''))/100).toFixed(2)) : undefined,
           classes: formData?.classes || [],
           idCounty: formData?.county ? +formData.county : undefined,
         }
@@ -354,7 +354,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                     <Combobox
                       id="court"
                       options={(getCourtsQuery.data?.courts || []).map((court) => ({ value: court.id.toString(), label: court.name }))}
-                      value={formData.court || 1}
+                      value={(getCourtsQuery.data?.courts || []).find(court => String(court.name).toLowerCase() === String(formData.court).toLowerCase())?.id.toString() || ''}
                       setValue={handleSelectChange("court")}
                       className="w-full"
                       disabled={!isEditing}
@@ -369,7 +369,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                     <Combobox
                       id="court-system"
                       options={courtSystems.map((courtSystem) => ({ value: courtSystem.id.toString(), label: courtSystem.name }))}
-                      value={formData.courtSystem || ''}
+                      value={courtSystems.find(courtSystem => String(courtSystem.name).toLowerCase() === String(formData.courtSystem).toLowerCase())?.id.toString() || ''}
                       setValue={handleSelectChange("courtSystem")}
                       className="w-full"
                       disabled={!isEditing}

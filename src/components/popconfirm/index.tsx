@@ -9,9 +9,10 @@ type PopoverProps = {
     description?: string
     onConfirm: () => Promise<any>
     autoConfirm?: boolean
+    disabled?: boolean
 }
 
-const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = false }: PopoverProps) => {
+const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = false, disabled = false }: PopoverProps) => {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -23,6 +24,7 @@ const PopConfirm = ({ children, title, description, onConfirm, autoConfirm = fal
     }
 
     const changeChange = (open: boolean) => {
+        if (disabled) return
         if (autoConfirm) return onConfirm()
         setOpen(open)
     }

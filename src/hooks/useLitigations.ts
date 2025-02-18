@@ -6,7 +6,7 @@ import { useAuth } from "./useAuth";
 import { useCallback } from "react";
 import { useSearchParamsPersist } from "./useSearchParamsPersist";
 
-type GetLitigationParams = Omit<GetLitigations.Params, "idOrganization">;
+export type GetLitigationParams = Omit<GetLitigations.Params, "idOrganization">;
 const INITIAL_PARAMS: GetLitigationParams = {
     limit: 20,
     page: 1,

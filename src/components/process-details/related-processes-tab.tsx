@@ -26,7 +26,7 @@ import { useEffect } from "react"
 import PopConfirm from "../popconfirm"
 import { RelatedProcessService } from "@/services/api/related-process"
 import { toast } from "@/hooks/use-toast"
-import { instanciaOptions } from "@/lib/constants/instancia-types"
+import CustomMaskedInput from "../masked-input"
 
 interface RelatedProcess {
   id: number
@@ -65,7 +65,7 @@ export function RelatedProcessesTab({ data, isLoading, invalidateLitigation }: R
       }
       if (idGroup) {
         await RelatedProcessService.add({
-          idOrganization: data.organizationid,
+          idOrganization: data.organization.id,
           idGroup,
           relations: [
             {
@@ -76,8 +76,12 @@ export function RelatedProcessesTab({ data, isLoading, invalidateLitigation }: R
         })
       } else {
         await RelatedProcessService.save({
-          idOrganization: data.organizationid,
+          idOrganization: data.organization.id,
           relations: [
+            {
+              idLitigationLink: data.id,
+              isMainLitigation: true,
+            },
             {
               processNumber: newProcess.number,
               instance: Number(newProcess.instance),
@@ -102,7 +106,7 @@ export function RelatedProcessesTab({ data, isLoading, invalidateLitigation }: R
     try {
       if (!data) throw new Error()
       await RelatedProcessService.delete({
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
         idRelatedProcess: id,
       })
       invalidateLitigation(data.id)
@@ -118,11 +122,11 @@ export function RelatedProcessesTab({ data, isLoading, invalidateLitigation }: R
   useEffect(() => {
     setIdGroup(data?.idRelatedProcessesGroup || null)
     if (!data || !Array.isArray(data.relatedProcesses) || data.relatedProcesses.length === 0) return
+    const p1 = data.processnumber.replace(/[^\d.-]/g, '')
     setProcesses((data.relatedProcesses || [])
       .filter((process) => {
-        const p1 = process.processnumber.replace(/[^\d.-]/g, '')
-        const p2 = data.processnumber.replace(/[^\d.-]/g, '')
-        return +process.instance !== +data.instance! && p1 !== p2
+        const p2 = process.processnumber.replace(/[^\d.-]/g, '')
+        return (+process.instance !== +data.instance!) || (p1 !== p2)
       })
       .map((process) => ({
           id: process.id,
@@ -142,13 +146,14 @@ return (
           <Label htmlFor="number">
             Número do processo <span className="text-red-500">*</span>
           </Label>
-          <Input
+          <CustomMaskedInput
             id="number"
             name="number"
-            placeholder="Digite o número do processo"
-            required
+            placeholder="_______-__.____._.__.____"
+            mask="1111111-11.1111.1.11.1111"
             value={number}
             onChange={(e) => setNumber(e.target.value)}
+            required
           />
         </div>
 
@@ -163,7 +168,7 @@ return (
             <SelectContent>
               <SelectItem value="1">1ª Instância</SelectItem>
               <SelectItem value="2">2ª Instância</SelectItem>
-              <SelectItem value="3">3ª Instância</SelectItem>
+              <SelectItem value="3">Instância Superior</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -198,7 +203,7 @@ return (
                     <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
                   </TableCell>
                   <TableCell>{process.number}</TableCell>
-                  <TableCell>{process.instance}ª Instância</TableCell>
+                  <TableCell>{+process.instance <= 2 ? `${process.instance}ª Instância` : 'Instância Superior'}</TableCell>
                   <TableCell className="text-right">
                     <PopConfirm
                       title="Deseja realmente remover este processo?"

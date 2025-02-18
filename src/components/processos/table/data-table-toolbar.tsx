@@ -11,22 +11,33 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import * as XLSX from 'xlsx'
-import { GetLitigations } from "@/services/api/litigations"
+import { GetLitigations, litigationsService } from "@/services/api/litigations"
 import { useLitigation } from "@/hooks/useLitigations"
 import { ValueOf } from "next/dist/shared/lib/constants"
-import { LitigationStatus, LitigationStatusLabels } from "@/constants/litigation"
+import { LitigationMonitoringType, LitigationStatus, LitigationStatusLabels } from "@/constants/litigation"
+import PopConfirm from "@/components/popconfirm"
+import { useAuth } from "@/hooks/useAuth"
 
 interface LitigationDataTableToolbarProps {
   table: Table<GetLitigations.LitigationInfo>
+  selectedRows: Set<string>
+  setSelectedRows: (rows: Set<string>) => void
+  isExporting: boolean
+  total: number
 }
 
 export function LitigationDataTableToolbar({
   table,
+  selectedRows,
+  setSelectedRows,
+  isExporting,
+  total
 }: LitigationDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0
-  const selectedRows = table.getSelectedRowModel().rows
   const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
+  const { getSelectedOrganization } = useAuth()
   const debounceTime = 500
+  const idOrganization = getSelectedOrganization()
 
   let debounceTimeout: NodeJS.Timeout | null = null
   const debounceFilter = async (key: keyof typeof filter, value: any): Promise<void> => {
@@ -36,19 +47,19 @@ export function LitigationDataTableToolbar({
     debounceTimeout = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
   }
 
-  const handleExport = () => {
-    const selectedData = selectedRows.map(row => {
-      const rowData = row.original as GetLitigations.LitigationInfo
-      return {
-        'Número do Processo': rowData.processnumber,
-        'Instância': rowData.instance,
-        'Cliente': rowData.clientname,
-        'Data Cadastro': rowData.createdat,
-        'Status': rowData.statusdescription,
-        'Comunicação': rowData.statusdescription,
-        'Monitoramento': rowData.statusdescription,
-      }
+  const handleExport = async () => {
+    const response = await litigationsService.getLitigations({
+      idOrganization,
+      noPagination: true,
+      ids: Array.from(selectedRows)
     })
+    const selectedData = response.data.map(row => ({
+        'Número do Processo': row.processnumber,
+        'Instância': row.instance,
+        'Data Cadastro': row.createdAt,
+        'Status': row.status.description,
+        'Monitoramento': row?.monitoring.find(m => m.type.id === LitigationMonitoringType.PUBLICATIONS)?.monitoring ? 'Ativo' : 'Inativo',
+    }))
 
     const ws = XLSX.utils.json_to_sheet(selectedData)
     const wb = XLSX.utils.book_new()
@@ -154,21 +165,42 @@ export function LitigationDataTableToolbar({
           </PopoverContent>
         </Popover>
 
-        {selectedRows.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            Exportar {selectedRows.length} {selectedRows.length === 1 ? 'processo' : 'processos'}
-          </Button>
+        {selectedRows.size > 0 && (
+          <>
+            <PopConfirm
+              title="Confirmar Exportação"
+              description="Tem certeza que deseja exportar os clientes selecionados?"
+              onConfirm={handleExport}
+            >
+              <Button
+                variant="outline"
+                className="gap-2"
+                loading={isExporting}
+              >
+                <FileDown className="h-4 w-4" />
+                Exportar {selectedRows.size} {selectedRows.size === 1 ? 'cliente' : 'clientes'}
+              </Button>
+            </PopConfirm>
+            <PopConfirm
+              title="Confirmar"
+              description="Tem certeza que deseja limpar a seleção?"
+              onConfirm={async () => setSelectedRows(new Set())}
+            >
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={isExporting}
+              >
+                <X className="h-4 w-4" />
+                Limpar Seleção
+              </Button>
+            </PopConfirm>
+          </>
         )}
       </div>
 
       <div className="text-sm text-muted-foreground">
-        {selectedRows.length} selecionado(s) | Total: {getAllLitigationsQuery.data?.total}
+        {selectedRows.size} selecionado(s) | Total: {total}
       </div>
     </div>
   )

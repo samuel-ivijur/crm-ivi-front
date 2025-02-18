@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  ColumnDef,
   ColumnFiltersState,
   SortingState,
   VisibilityState,
@@ -19,28 +20,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { litigationTableColumns } from "./columns"
 import { LitigationDataTableToolbar } from "./data-table-toolbar"
 import { GetLitigations } from "@/services/api/litigations"
-import { useLitigation } from "@/hooks/useLitigations"
+import { GetLitigationParams } from "@/hooks/useLitigations"
 import Pagination from "@/components/pagination"
+import { useLitigationActions } from "@/hooks/use-litigation-actions"
+import { useRouter } from "next/navigation"
 
-export function LitigationTable() {
+type LitigationTableProps = {
+  data: {
+    total: number;
+    data: GetLitigations.LitigationInfo[];
+    isLoading: boolean;
+  }
+  filter: GetLitigationParams
+  changeFilter: (params: Partial<GetLitigationParams>) => void
+}
+
+export function LitigationTable({
+  data,
+  filter,
+  changeFilter
+}: LitigationTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
-  const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
+  const [rowSelection, setRowSelection] = useState<Set<string>>(new Set())
+  const [isAllSelected, setIsAllSelected] = useState(false)
+  const { changeMonitoring, deleteLitigation } = useLitigationActions()
+  const router = useRouter()
+
+  const selectAll = (data: GetLitigations.LitigationInfo[], checked: boolean) => {
+    let newRowSelection = new Set(rowSelection)
+    data.forEach((row) => {
+      if (checked) newRowSelection.add(row.id)
+      else newRowSelection.delete(row.id)
+    })
+    setRowSelection(newRowSelection)
+  }
+
+  const viewLitigation = (id: string) => {
+    router.push(`/processos/${id}`)
+  }
+
+  const [columns, setColumns] = useState<ColumnDef<GetLitigations.LitigationInfo>[]>([])
+
+  const PagePagination = () => (
+    <Pagination
+      limit={filter.limit || 20}
+      page={filter.page || 1}
+      setLimit={(limit) => changeFilter({ limit })}
+      setPage={(page) => changeFilter({ page })}
+      total={data.total || 0}
+    />
+  )
 
   const table = useReactTable<GetLitigations.LitigationInfo>({
-    data: getAllLitigationsQuery.data?.data || [],
-    columns: litigationTableColumns,
+    data: data.data || [],
+    columns: columns,
     manualPagination: true,
-    onPaginationChange: (updater) => {
-      const newState = typeof updater === 'function' ? updater({ pageIndex: filter.page, pageSize: filter.limit }) : updater;
-      // changeFilter({ page: newState.pageIndex, limit: newState.pageSize });
-    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -48,32 +88,44 @@ export function LitigationTable() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      rowSelection,
       pagination: {
-        pageIndex: filter.page,
-        pageSize: filter.limit,
+        pageIndex: filter.page || 1,
+        pageSize: filter.limit || 20,
       },
     }
   })
 
-  const PagePagination = () => (
-    <Pagination
-      limit={filter.limit}
-      page={filter.page}
-      setLimit={(limit) => changeFilter({ limit })}
-      setPage={(page) => changeFilter({ page })}
-      total={getAllLitigationsQuery.data?.total || 0}
-    />
-  )
+  useEffect(() => {
+    const isAllSelected = !data.data.some((row) => !rowSelection.has(row.id))
+    setIsAllSelected(isAllSelected)
+  }, [data.data, rowSelection])
+
+  useEffect(() => {
+    setColumns(litigationTableColumns({
+      rowSelection,
+      setRowSelection,
+      selectAll,
+      isAllSelected,
+      data: data.data,
+      changeMonitoring,
+      deleteLitigation,
+      viewLitigation
+    }))
+  }, [data.data, rowSelection, isAllSelected])
 
   return (
     <div className="space-y-4">
-      <LitigationDataTableToolbar table={table} />
+      <LitigationDataTableToolbar
+        table={table}
+        selectedRows={rowSelection}
+        setSelectedRows={setRowSelection}
+        isExporting={false}
+        total={data.total || 0}
+      />
       <PagePagination />
       <div className="rounded-md border">
         <Table>
@@ -95,7 +147,7 @@ export function LitigationTable() {
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody loading={getAllLitigationsQuery.isLoading}>
+          <TableBody loading={data.isLoading}>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -124,7 +176,7 @@ export function LitigationTable() {
       </div>
       <div className="flex items-center justify-end space-x-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} selecionado(s) | Total: {getAllLitigationsQuery.data?.total}
+          {table.getFilteredSelectedRowModel().rows.length} selecionado(s) | Total: {data.total}
         </div>
         <PagePagination />
 

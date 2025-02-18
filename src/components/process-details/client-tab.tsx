@@ -70,7 +70,7 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
 
       await litigationsService.editLitigation({
         id: data.id,
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
         nick,
         ...params,
       })
@@ -91,25 +91,25 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
   }
 
   const handleFetchBeneficiary = async (value: string): Promise<void> => {
-    const idOrganization = data!.organizationid
+    const idOrganization = data!.organization.id
     changeFilter({ searchTerm: value, idOrganization })
   }
 
   const setInitialForm = async (): Promise<void> => {
     if (!data) return
 
-    const exec = async () => {
-      if (beneficiaryOptions.some(option => String(option.value) === String(data.idclient))) return
-      setBeneficiaryOptions((prev) => [...prev, {
-        value: data.idclient,
-        label: `${data.clientname}${data.clientphone ? ` - ${data.clientphone}` : ''}`
-      }])
-      setIdBeneficiary(data.idclient)
-      setIdQualification(+data.idqualification)
-      setNick(data.nick)
-    }
+    // const exec = async () => {
+    //   if (beneficiaryOptions.some(option => String(option.value) === String(data.client?.id))) return
+    //   setBeneficiaryOptions((prev) => [...prev, {
+    //     value: data.client?.id,
+    //     label: `${data.client?.name}${data.client?.phone ? ` - ${data.client?.phone}` : ''}`
+    //   }])
+    //   setIdBeneficiary(data.client?.id)
+    //   setIdQualification(+data.client?.qualification?.id)
+    //   setNick(data.nick)
+    // }
 
-    setTimeout(exec, 1000)
+    // setTimeout(exec, 1000)
   }
 
   useEffect(() => {

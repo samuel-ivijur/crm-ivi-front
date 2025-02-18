@@ -39,6 +39,7 @@ import { toast } from "@/hooks/use-toast"
 import { TaskService } from "@/services/api/tasks"
 import { Skeleton } from "../ui/skeleton"
 import PopConfirm from "../popconfirm"
+import CustomMaskedInput from "../masked-input"
 
 interface Deadline {
   id: number
@@ -58,7 +59,7 @@ interface DeadlinesTabProps {
 export function DeadlinesTab({ data, isLoading, invalidateLitigation }: DeadlinesTabProps) {
   const [deadlines, setDeadlines] = useState<Deadline[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>()
-  const [selectedTime, setSelectedTime] = useState("08:00")
+  const [selectedTime, setSelectedTime] = useState("0800")
   const [name, setName] = useState("")
   const [responsible, setResponsible] = useState("")
   const [idPriority, setIdPriority] = useState(TaskPriorities.WithoutPriority)
@@ -78,12 +79,13 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
       }
 
       const newDate = new Date(selectedDate)
-      const [hours, minutes] = selectedTime.split(':')
+      const hours = selectedTime.slice(0, 2)
+      const minutes = selectedTime.slice(2, 4)
       newDate.setHours(parseInt(hours), parseInt(minutes))
 
       await TaskService.save({
         idLitigationLink: data.id,
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
         title: name,
         deadline: newDate.toISOString(),
         idPriority,
@@ -106,7 +108,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
     try{
       if (!data) throw new Error()
       await TaskService.changeStatus({
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
         idStatus: status,
         idTask: id,
       })
@@ -126,7 +128,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
       if (!data) throw new Error()
       await TaskService.delete({
         id,
-        idOrganization: data.organizationid,
+        idOrganization: data.organization.id,
       })
       invalidateLitigation(data.id)
     } catch (error) {
@@ -199,20 +201,29 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
               </Popover>
 
               <div className="relative w-[90px]">
-                <Input
-                  type="text"
+                <CustomMaskedInput
                   value={selectedTime}
+                  mask="11:11"
                   onChange={(e) => {
                     let value = e.target.value.replace(/\D/g, '')
                     if (value.length > 4) value = value.slice(0, 4)
                     const hours = value.slice(0, 2)
-                    const minutes = value.slice(2, 4)
-
-                    if (parseInt(hours) > 23) value = '23' + minutes
+                    let minutes = value.slice(2, 4)
+                    if (parseInt(hours) > 23) {
+                      minutes = minutes || '59'
+                      value = '23' + minutes
+                    }
                     if (parseInt(minutes) > 59) value = hours + '59'
 
-                    const formatted = value.padEnd(4, '0')
-                    setSelectedTime(`${formatted.slice(0, 2)}:${formatted.slice(2, 4)}`)
+                    setSelectedTime(`${value.slice(0, 2)}${value.slice(2, 4)}`)
+                  }}
+                  onBlur={() => {
+                    if (parseInt(selectedTime.slice(0, 2)) > 23) {
+                      return setSelectedTime('23:59')
+                    }
+                    const hours = selectedTime.slice(0, 2).padStart(2, '0')
+                    const minutes = selectedTime.slice(2, 4).padStart(2, '0')
+                    setSelectedTime(`${hours}${minutes}`)
                   }}
                   className="pl-8"
                   placeholder="00:00"
@@ -284,7 +295,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
                       <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
                     </TableCell>
                     <TableCell>{deadline.name}</TableCell>
-                    <TableCell>{'-' || deadline.idResponsible}</TableCell>
+                    <TableCell>{deadline.idResponsible ? deadline.idResponsible : '-'}</TableCell>
                     <TableCell>
                       {format(deadline.date, "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </TableCell>

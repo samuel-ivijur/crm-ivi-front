@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/common/sidebar"
+import { TooltipProvider } from "@/components/ui"
 
 export default function DashboardLayout({
   children,
@@ -9,7 +10,9 @@ export default function DashboardLayout({
     <div className="flex min-h-screen">
       <Sidebar />
       <main className="flex-1 overflow-x-hidden lg:ml-16">
-        {children}
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
       </main>
     </div>
   )

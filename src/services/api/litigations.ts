@@ -10,8 +10,12 @@ const headers = {
 }
 
 export const litigationsService = {
-  getLitigations: async (params: GetLitigations.Params): Promise<GetLitigations.Result["data"]> => {
-    const queryParams = new URLSearchParams(params as any).toString();
+  getLitigations: async ({ids, ...params}: GetLitigations.Params): Promise<GetLitigations.Result["data"]> => {
+    let queryParams = new URLSearchParams(params as any).toString();
+    if (Array.isArray(ids) && ids.length > 0) {
+      let newQueryParams = ids.map( id => 'ids[]=' + id).join('&')
+      queryParams += queryParams ? `&${newQueryParams}` : newQueryParams
+    }
     const response = await fetch(`${API_URL}/litigations?${queryParams}`, {
       method: 'GET',
       headers,
@@ -65,6 +69,18 @@ export const litigationsService = {
     const data: SaveLitigation.Result = await response.json()
     return data
   },
+  saveLitigationBulk: async (params: SaveLitigationBulk.Params): Promise<void> => {
+    const response = await fetch(`${API_URL}/litigations`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao salvar processo');
+    }
+
+  },
   editLitigation: async (
     params: {
       id: string;
@@ -82,6 +98,13 @@ export const litigationsService = {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Erro ao editar processo');
     }
+  },
+  deleteLitigationBulk: async (params: DeleteLitigationBulk.Params): Promise<void> => {
+    await fetch(`${API_URL}/litigations/delete`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(params),
+    });
   },
   addAdverseParty: async ({ idLitigation, idOrganization, adverseParty }: AddAdverseParty.Params): Promise<AddAdverseParty.Result> => {
     const response = await fetch(`${API_URL}/litigations/${idLitigation}/adverseParty`, {
@@ -168,8 +191,10 @@ export const litigationsService = {
 export namespace GetLitigations {
   export type Params = {
     idOrganization: string
-    limit: number
-    page: number
+    limit?: number
+    page?: number
+    noPagination?: boolean
+    ids?: string[]
     startDate?: string
     endDate?: string
     nick?: string
@@ -213,61 +238,88 @@ export namespace GetLitigations {
       description: string;
     };
   }
+
+  interface Organization {
+    id: string;
+    name: string;
+    status: Status;
+  }
+  
+  interface Status {
+    id: number;
+    description: string;
+  }
+  
+  interface ErrorStatus {
+    id: number;
+    description: string;
+  }
+  
+  interface Uf {
+    id: number | null;
+    description: string | null;
+  }
+  
+  interface CaseCover {
+    id: number;
+    distributionType: string | null;
+    subject: string | null;
+    extraSubject: string | null;
+    area: string | null;
+    nature: string | null;
+    forum: string | null;
+    court: string | null;
+    courtSystem: string | null;
+    causeValue: number;
+    alternativeNumber: string | null;
+    distributionDate: string | null;
+  }
+  
+  interface ExternalStatus {
+    description: string;
+    id: number;
+  }
+  
+  interface Monitoring {
+    id: number;
+    type: MonitoringType;
+    monitoring: boolean;
+  }
+  
+  interface MonitoringType {
+    id: number;
+    description: string;
+  }
+  
+  interface Cadaster {
+    id: number;
+    description: string;
+  }
+
   export type LitigationInfo = {
     id: string;
     processnumber: string;
     instance: number;
-    court: string;
-    obs: string;
-    nick: string;
-    idstatus: number;
-    clientidstatus: number;
-    clientstatus: string;
-    statuserrordescription: string;
-    idstatuserror: number;
-    statusdescription: string;
-    createdat: string;
-    idclient: string;
-    clientname: string;
-    clientphone: string;
-    qualification: string;
-    idqualification: number;
+    court: string | null;
+    obs: string | null;
     amountprogress: number;
-    externalstatusdescription: string;
-    externalstatusid: string;
-    organizationid: string;
-    organizationname: string;
-    idorganizationstatus: number;
-    organizationstatus: string;
-    iduf: number;
-    uf: string;
-    adverseParties: AdverseParty[]
-    tasks: Task[]
-    idRelatedProcessesGroup: number;
-    monitoring: LitigationMonitoring[]
-    case_cover: {
-      id?: number,
-      distribution_type?: string,
-      distribution_date?: string,
-      subject?: string,
-      extra_subject?: string,
-      area?: string,
-      nature?: string,
-      forum?: string,
-      court?: string,
-      court_system?: string
-      cause_value?: string,
-      alternative_number?: string,
-    },
+    organization: Organization;
+    status: Status;
+    error: ErrorStatus;
+    uf: Uf;
+    caseCover: CaseCover;
+    externalStatus: ExternalStatus;
+    createdAt: string;
+    monitoring: Monitoring[];
+    cadaster: Cadaster;
+    adverseParties: AdverseParty[];
+    tasks: Task[];
+    idRelatedProcessesGroup: number | null;
     relatedProcesses: {
       id: number;
       processnumber: string;
       instance: string;
     }[]
-    cadaster: {
-      id: number;
-      description: string;
-    }
     beneficiaries: {
       id: string;
       name: string;
@@ -425,5 +477,19 @@ export namespace FindLitigationBeneficiary {
       };
     }[]
     total: number;
+  }
+}
+
+export namespace DeleteLitigationBulk {
+  export type Params = {
+    idOrganization: string;
+    ids: string[];
+  }
+}
+
+export namespace SaveLitigationBulk {
+  export type Params = {
+    idOrganization: string;
+    litigations: LitigationParams[];
   }
 }

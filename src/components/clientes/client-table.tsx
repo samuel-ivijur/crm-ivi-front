@@ -90,7 +90,7 @@ export function ClientTable({
           res.data.forEach(litigation => litigation.monitoring.forEach(monitoring => {
             if (monitoring.type.id !== LitigationMonitoringType.PUBLICATIONS) return
             newLitigationMonitoring[litigation.id] = {
-              id: monitoring.id,
+              id: monitoring.id.toString(),
               monitoring: monitoring.monitoring,
               type: { id: monitoring.type.id, description: monitoring.type.description }
             }

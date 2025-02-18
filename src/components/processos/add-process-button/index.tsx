@@ -1,30 +1,32 @@
 "use client"
 
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Dispatch, SetStateAction } from 'react'
+import { Download, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ProcessFormModal } from '@/components/process-form'
-import { ProcessFormProvider } from '@/context/useProcessModalForm'
 
-export function AddProcessButton() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
+type AddProcessButtonProps = {
+  setIsModalRegisterOpen: Dispatch<SetStateAction<boolean>>
+  setIsModalImportOpen: Dispatch<SetStateAction<boolean>>
+}
+export function AddProcessButton({
+  setIsModalRegisterOpen,
+  setIsModalImportOpen,
+}: AddProcessButtonProps) {
   return (
     <>
-      <Button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-[#0146cf] hover:bg-[#0146cf]/90"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Cadastrar um processo
-      </Button>
-
-      <ProcessFormProvider>
-        <ProcessFormModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-        />
-      </ProcessFormProvider>
+      <div className="flex gap-2">
+      <Button variant="outline" className="gap-2" onClick={() => setIsModalImportOpen(true)}>
+            <Download className="h-4 w-4" />
+            Importar Planilha
+          </Button>
+        <Button
+          onClick={() => setIsModalRegisterOpen(true)}
+          className="bg-[#0146cf] hover:bg-[#0146cf]/90"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Cadastrar um processo
+        </Button>
+      </div>
     </>
   )
 } 
