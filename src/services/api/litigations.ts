@@ -10,10 +10,10 @@ const headers = {
 }
 
 export const litigationsService = {
-  getLitigations: async ({ids, ...params}: GetLitigations.Params): Promise<GetLitigations.Result["data"]> => {
+  getLitigations: async ({ ids, ...params }: GetLitigations.Params): Promise<GetLitigations.Result["data"]> => {
     let queryParams = new URLSearchParams(params as any).toString();
     if (Array.isArray(ids) && ids.length > 0) {
-      let newQueryParams = ids.map( id => 'ids[]=' + id).join('&')
+      let newQueryParams = ids.map(id => 'ids[]=' + id).join('&')
       queryParams += queryParams ? `&${newQueryParams}` : newQueryParams
     }
     const response = await fetch(`${API_URL}/litigations?${queryParams}`, {
@@ -43,18 +43,6 @@ export const litigationsService = {
 
     return data.data
   },
-  createLitigation: async (params: CreateLitigationParams): Promise<void> => {
-    const response = await fetch(`${API_URL}/litigations`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(params),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao criar processo');
-    }
-  },
   saveLitigation: async (params: SaveLitigation.Params): Promise<{ id: string }> => {
     const response = await fetch(`${API_URL}/litigations/save`, {
       method: 'POST',
@@ -81,7 +69,7 @@ export const litigationsService = {
     }
 
   },
-  editLitigation: async (
+  updateLitigation: async (
     params: {
       id: string;
       idOrganization: CreateLitigationParams['idOrganization'];
@@ -133,7 +121,7 @@ export const litigationsService = {
     }
   },
   saveLitigationBeneficiary: async ({ idLitigation, ...params }: SaveLitigationBeneficiary.Params): Promise<void> => {
-    const response = await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary`, {
+    await fetch(`${API_URL}/litigations/${idLitigation}/beneficiary`, {
       method: 'POST',
       headers,
       body: JSON.stringify(params),
@@ -209,6 +197,8 @@ export namespace GetLitigations {
     idQualification?: number[]
     idStatusLitigation?: number[]
     idBeneficiary?: string[]
+    idTypeMonitoring?: number
+    idStatusMonitoring?: boolean
   }
   export type Result = {
     data: {
@@ -244,22 +234,22 @@ export namespace GetLitigations {
     name: string;
     status: Status;
   }
-  
+
   interface Status {
     id: number;
     description: string;
   }
-  
+
   interface ErrorStatus {
     id: number;
     description: string;
   }
-  
+
   interface Uf {
     id: number | null;
     description: string | null;
   }
-  
+
   interface CaseCover {
     id: number;
     distributionType: string | null;
@@ -274,23 +264,23 @@ export namespace GetLitigations {
     alternativeNumber: string | null;
     distributionDate: string | null;
   }
-  
+
   interface ExternalStatus {
     description: string;
     id: number;
   }
-  
+
   interface Monitoring {
     id: number;
     type: MonitoringType;
     monitoring: boolean;
   }
-  
+
   interface MonitoringType {
     id: number;
     description: string;
   }
-  
+
   interface Cadaster {
     id: number;
     description: string;
@@ -386,8 +376,39 @@ export type LitigationParamsTask = {
 
 export type LitigationParamsClient = {
   name: string;
-  phone: string;
-  idQualification: number;
+  phone?: string;
+  idType?: number;
+  email?: string;
+  birthDate?: string;
+  document?: string;
+  address?: {
+    street?: string;
+    number?: string;
+    complement?: string;
+    neighborhood?: string;
+    city?: string;
+    state?: string;
+    cep?: string;
+  }
+}
+export interface CaseCover {
+  distributionDate?: string;
+  distributionType?: string;
+  area?: string;
+  nature?: string;
+  forum?: string;
+  idCourt?: number;
+  idCounty?: number;
+  claimValue?: string;
+  classes?: string[];
+  idCourtSystem?: number;
+  subject?: string;
+  extraSubject?: string;
+  alternativeNumber?: string;
+}
+export interface RelatedProcesses {
+  processNumber: string;
+  instance: number;
 }
 export interface LitigationParams {
   processNumber: string;
@@ -398,27 +419,10 @@ export interface LitigationParams {
   nick?: string;
   obs?: string;
   adverseParty?: Omit<AdversyParty, 'id'>[];
-  caseCover: {
-    distributionDate?: string;
-    distributionType?: string;
-    area?: string;
-    nature?: string;
-    forum?: string;
-    idCourt?: number;
-    idCounty?: number;
-    claimValue?: string;
-    classes?: string[];
-    idCourtSystem?: number;
-    subject?: string;
-    extraSubject?: string;
-    alternativeNumber?: string;
-  }
+  caseCover: CaseCover
   tasks?: LitigationParamsTask[];
-  relatedProcesses?: {
-    processNumber: string;
-    instance: number;
-  }[];
-  client?: LitigationParamsClient;
+  relatedProcesses?: RelatedProcesses[];
+  beneficiary?: LitigationParamsClient;
 
 }
 export interface CreateLitigationParams {

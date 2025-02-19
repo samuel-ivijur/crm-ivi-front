@@ -100,10 +100,6 @@ export default function ProcessosPage() {
         }}
         filter={filter}
         changeFilter={changeFilter}
-        rowSelection={rowSelection}
-        setRowSelection={setRowSelection}
-        selectAll={selectAll}
-        isAllSelected={isAllSelected}
       />
       <ProcessFormProvider>
         <ProcessFormModal

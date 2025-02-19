@@ -46,5 +46,3 @@ export enum LitigationStatus {
     PUBLICATIONS = 1,
   }
   
-  
-  

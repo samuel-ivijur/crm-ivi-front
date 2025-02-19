@@ -47,7 +47,20 @@ export function ProcessHeader({ data, isLoading }: ProcessHeaderProps) {
             <div className="w-full">
               <div className="text-sm font-medium">Cliente</div>
               {isLoading ? <HeaderSkeleton n={1} /> :
-                (<div className="text-sm text-gray-500">{data?.clientname}</div>)
+                (<>
+                  {(data?.beneficiaries || []).length > 0 ? (
+                    <>
+                      {data?.beneficiaries.slice(0, 2).map(beneficiary => (
+                        <div key={beneficiary.id} className="text-sm text-gray-500">{beneficiary.name}</div>
+                      ))}
+                      {((data?.beneficiaries || []).length > 2) && (
+                        <div className="text-sm text-gray-500">+{(data?.beneficiaries || []).length - 2}</div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-500">-</div>
+                  )}
+                </>)
               }
             </div>
           </div>
@@ -80,11 +93,11 @@ export function ProcessHeader({ data, isLoading }: ProcessHeaderProps) {
                   <div className="text-xs text-gray-500">Total</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter( task => [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.LATE].includes(task.status.id)).length}</div>
+                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter(task => [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.LATE].includes(task.status.id)).length}</div>
                   <div className="text-xs text-gray-500">Pendentes</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter( task => task.status.id === TaskStatus.COMPLETED).length}</div>
+                  <div className="text-lg font-bold">{isLoading ? <HeaderSkeleton n={1} /> : (data?.tasks || []).filter(task => task.status.id === TaskStatus.COMPLETED).length}</div>
                   <div className="text-xs text-gray-500">Concluídas</div>
                 </div>
               </div>

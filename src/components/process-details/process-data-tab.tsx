@@ -140,7 +140,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
         description: "Não foi possível salvar os dados do processo. Tente novamente mais tarde.",
         variant: "destructive",
       })
-      await litigationsService.editLitigation({
+      await litigationsService.updateLitigation({
         id: data.id,
         idOrganization: data.organization.id,
         idStatus: formData.isActive ? LitigationStatus.ACTIVE : LitigationStatus.ARCHIVED,

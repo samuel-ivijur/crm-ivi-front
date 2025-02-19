@@ -7,7 +7,6 @@ import { useProcessForm } from '@/context/useProcessModalForm'
 import { toast } from '@/hooks/use-toast'
 import { useState } from 'react'
 import { useLitigation } from '@/hooks/useLitigations'
-import { ProcessDataForm } from './steps'
 
 interface ProcessFormModalProps {
   open: boolean

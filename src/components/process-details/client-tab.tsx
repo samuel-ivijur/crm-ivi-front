@@ -1,16 +1,12 @@
-import { GetLitigation, LitigationParams, litigationsService } from "@/services/api/litigations"
+import { GetLitigation, litigationsService } from "@/services/api/litigations"
 import { useEffect, useState } from "react"
-import { Loader2, Save, X } from "lucide-react"
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Switch } from "../ui"
-import { useBeneficiary } from "@/hooks/useBeneficiary"
-import { DebounceCombobox } from "../debounce-combo-box"
-import { BeneficairyQualification, BeneficiaryQualificationLabels } from "@/constants"
-import CustomMaskedInput from "../masked-input"
-import PopConfirm from "../popconfirm"
-import { Beneficiary } from "@/types/beneficiarie"
-import { Skeleton } from "../ui/skeleton"
+import { Save, Plus, Loader2 } from "lucide-react"
+import { Button } from "../ui"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuth"
+import { ClientForm } from "../process-form/steps/client-form/client-form"
+import { BeneficiaryFormData } from "@/context/useProcessModalForm"
+import { beneficiariesService } from "@/services/api/beneficiaries"
 
 interface ClientTabProps {
   data: GetLitigation.Result["data"] | null
@@ -20,263 +16,215 @@ interface ClientTabProps {
 
 export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabProps) {
   const { getSelectedOrganization } = useAuth();
-  const [isNewClient, setIsNewClient] = useState(false)
-  const [idBeneficiary, setIdBeneficiary] = useState<string | null>(null)
-  const [idQualification, setIdQualification] = useState<number | null>(null)
-  const [nick, setNick] = useState('')
-  const [beneficiaryOptions, setBeneficiaryOptions] = useState<Array<{ value: string, label: string }>>([])
+  const [beneficiaries, setBeneficiaries] = useState<Array<BeneficiaryFormData & { new: boolean }>>([])
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [isUpdatingBeneficiary, setIsUpdatingBeneficiary] = useState(false)
+  const [isEditing, setIsEditing] = useState<Record<string, boolean>>({})
 
-  const [newBeneficiary, setNewBeneficiary] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  })
-  const [isSaving, setIsSaving] = useState(false)
-  const { getBeneficiariesQuery, changeFilter } = useBeneficiary(getSelectedOrganization())
-
-  const handleCancel = async () => {
-    setIsNewClient(true)
+  const updateBeneficiaries = (index: number, field: keyof BeneficiaryFormData, value: any) => {
+    if (field === 'idClient') {
+      const isBeneficiaryInserted = beneficiaries.some(beneficiary => beneficiary.idClient === value)
+      if (isBeneficiaryInserted) {
+        toast({
+          title: 'Beneficiário já inserido',
+          description: 'Por favor, insira um beneficiário diferente',
+          variant: 'destructive'
+        })
+        return
+      }
+    }
+    setBeneficiaries(prev => prev.map((beneficiary, i) => i === index ? { ...beneficiary, [field]: value } : beneficiary))
+    setIsEditing(prev => ({ ...prev, [index]: true }))
   }
 
-  const handleSave = async () => {
-    if (!data) return
-    setIsSaving(true)
-    try {
+  const removeBeneficiary = async (index: number) => {
+    setIsUpdatingBeneficiary(true)
+    if (beneficiaries[index].new) {
+      setBeneficiaries(prev => prev.filter((_, i) => i !== index))
+    } else {
+      await litigationsService.deleteLitigationBeneficiary({
+        idOrganization: getSelectedOrganization(),
+        idLitigation: data!.id,
+        idBeneficiary: data!.beneficiaries[index].id
+      })
+      invalidateLitigation(data!.id)
+    }
+    setIsUpdatingBeneficiary(false)
+  }
 
-      const params: Partial<LitigationParams> = {}
-      if (isNewClient) {
-        if (!newBeneficiary.name || !newBeneficiary.phone || !idQualification) {
-          return toast({
-            title: 'Erro ao salvar',
-            description: 'Preencha todos os campos obrigatórios',
-            variant: 'destructive',
-          })
-        }
-        params.client = {
-          name: newBeneficiary.name,
-          phone: newBeneficiary.phone,
-          idQualification: idQualification,
+  const addBeneficiary = () => {
+    if (!validateBeneficiaries()) {
+      toast({
+        title: 'Complete os campos obrigatórios',
+        description: 'Por favor, verifique os campos obrigatórios',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    setIsEditing(prev => ({ ...prev, [beneficiaries.length]: true }))
+    setBeneficiaries(prev => [...prev, {
+      new: true,
+      selectClient: true,
+      idClient: '',
+      beneficiary: { name: '', phone: '', email: '', birthDate: '', document: '', address: { street: '', number: '', complement: '', neighborhood: '' } },
+    }])
+  }
+
+  const validateBeneficiaries = (index?: number) => {
+    const newErrors: Record<string, string> = {}
+    const validateBeneficiary = (beneficiary: BeneficiaryFormData & { new: boolean }, index: number) => {
+      if (beneficiary.selectClient) {
+        if (!beneficiary.idClient) {
+          newErrors[`idClient-${index}`] = 'Campo obrigatório'
         }
       } else {
-        if (!idBeneficiary) {
-          return toast({
-            title: 'Erro ao salvar',
-            description: 'Selecione um cliente',
-            variant: 'destructive',
-          })
+        if (!beneficiary.beneficiary?.name) {
+          newErrors[`name-${index}`] = 'Campo obrigatório'
         }
-        params.idClient = idBeneficiary || undefined
+        if (!beneficiary.beneficiary?.idType) {
+          newErrors[`idType-${index}`] = 'Campo obrigatório'
+        }
       }
+    }
+    if (index !== undefined) {
+      validateBeneficiary(beneficiaries[index], index)
+    } else {
+      beneficiaries.forEach((beneficiary, index) => validateBeneficiary(beneficiary, index))
+    }
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
-      await litigationsService.editLitigation({
-        id: data.id,
-        idOrganization: data.organization.id,
-        nick,
-        ...params,
-      })
-      invalidateLitigation(data.id)
+  const saveBeneficiary = async (index: number): Promise<string> => {
+    const { id } = await beneficiariesService.save({
+      idOrganization: getSelectedOrganization(),
+      name: beneficiaries[index].beneficiary?.name!,
+      idType: beneficiaries[index].beneficiary?.idType!,
+      phone: beneficiaries[index].beneficiary?.phone! || undefined,
+      email: beneficiaries[index].beneficiary?.email! || undefined,
+      birthDate: beneficiaries[index].beneficiary?.birthDate! || undefined,
+      document: beneficiaries[index].beneficiary?.document! || undefined,
+    })
+    return id
+  }
+
+  const saveLitigationBeneficiary = async (index: number) => {
+    const idBeneficiary = beneficiaries[index].selectClient ? beneficiaries[index].idClient! : await saveBeneficiary(index)
+    await litigationsService.saveLitigationBeneficiary({
+      idOrganization: getSelectedOrganization(),
+      idLitigation: data!.id,
+      communicate: true,
+      idBeneficiary,
+      idQualification: beneficiaries[index].idQualification!,
+      nick: beneficiaries[index].nick
+    })
+  }
+
+  const updateLitigationBeneficiary = async (index: number) => {
+    const currentBeneficiary = data!.beneficiaries[index]
+
+    await litigationsService.deleteLitigationBeneficiary({
+      idOrganization: getSelectedOrganization(),
+      idLitigation: data!.id,
+      idBeneficiary: currentBeneficiary.id,
+    })
+    await saveLitigationBeneficiary(index)
+  }
+
+  const handleSave = async (index: number) => {
+    try{
+
+      if (!validateBeneficiaries(index)) return
+      
+      beneficiaries[index].new ? await saveLitigationBeneficiary(index) : await updateLitigationBeneficiary(index)
+      setIsEditing(prev => ({ ...prev, [index]: false }))
+      
+      const msg = beneficiaries[index].new ? 'adicionado' : 'atualizado'
       toast({
-        title: 'Sucesso',
-        description: 'Dados do cliente salvos com sucesso',
+        title: 'Finalizado',
+        description: `O beneficiário foi ${msg} com sucesso`,
+        variant: 'success'
       })
+      invalidateLitigation(data!.id)
     } catch (error) {
+      console.error(error)
       toast({
-        title: 'Erro ao salvar',
-        description: 'Ocorreu um erro ao salvar os dados do cliente',
-        variant: 'destructive',
+        title: 'Erro',
+        description: 'Ocorreu um erro ao salvar o beneficiário',
+        variant: 'destructive'
       })
-    } finally {
-      setIsSaving(false)
     }
   }
 
-  const handleFetchBeneficiary = async (value: string): Promise<void> => {
-    const idOrganization = data!.organization.id
-    changeFilter({ searchTerm: value, idOrganization })
-  }
-
-  const setInitialForm = async (): Promise<void> => {
-    if (!data) return
-
-    // const exec = async () => {
-    //   if (beneficiaryOptions.some(option => String(option.value) === String(data.client?.id))) return
-    //   setBeneficiaryOptions((prev) => [...prev, {
-    //     value: data.client?.id,
-    //     label: `${data.client?.name}${data.client?.phone ? ` - ${data.client?.phone}` : ''}`
-    //   }])
-    //   setIdBeneficiary(data.client?.id)
-    //   setIdQualification(+data.client?.qualification?.id)
-    //   setNick(data.nick)
-    // }
-
-    // setTimeout(exec, 1000)
-  }
-
   useEffect(() => {
-    setBeneficiaryOptions(getBeneficiariesQuery.data?.beneficiaries.map((beneficiary) => ({
-      value: beneficiary.id.toString(),
-      label: `${beneficiary.name}${beneficiary.phone ? ` - ${beneficiary.phone}` : ''}`
-    })) || [])
-  }, [getBeneficiariesQuery.data])
-
-  useEffect(() => {
-    setInitialForm()
+    if (data?.beneficiaries) {
+      setBeneficiaries(data.beneficiaries.map(beneficiary => ({
+        new: false,
+        selectClient: true,
+        idClient: beneficiary.id,
+        beneficiary: {
+          name: '',
+          phone: '',
+          email: '',
+          birthDate: '',
+          document: '',
+          address: {
+            street: '',
+            number: '',
+            complement: '',
+            neighborhood: '',
+          },
+        },
+        idQualification: beneficiary.qualification.id,
+        nick: beneficiary.nick
+      })))
+    }
   }, [data])
 
-  const SelectQualification = () => {
-    return (
-      <>
-        <Label htmlFor="qualification">
-          Qualificação do cliente <span className="text-red-500">*</span>
-        </Label>
-        <Select value={idQualification?.toString()} onValueChange={(value) => setIdQualification(Number(value))}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione a qualificação" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.values(BeneficairyQualification).map((qualification) => (
-              <SelectItem key={qualification} value={String(qualification)}>
-                {BeneficiaryQualificationLabels[qualification]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </>
-    )
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">Informações do Cliente</h3>
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={!isNewClient}
-            onCheckedChange={(checked) => setIsNewClient(!checked)}
-          />
-          <span className="text-sm">Selecionar Cliente</span>
+    <>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-full">
+          <Loader2 className="animate-spin" />
         </div>
-      </div>
-      {isLoading ?
-        <div className="h-full">
-          <Skeleton className="h-[270px] w-full" />
-          <div className="flex justify-end gap-2 mt-4">
-            <Skeleton className="h-[40px] w-[100px]" />
-            <Skeleton className="h-[40px] w-[100px]" />
-          </div>
-        </div> :
-        <>
-          {isNewClient ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Nome <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="Digite o nome"
-                  value={newBeneficiary.name}
-                  onChange={(e) => setNewBeneficiary({ ...newBeneficiary, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Celular <span className="text-red-500">*</span>
-                </Label>
-                <CustomMaskedInput
-                  id="phone"
-                  placeholder="(__) _____-____"
-                  value={newBeneficiary.phone}
-                  onChange={(e) => setNewBeneficiary({ ...newBeneficiary, phone: e.target.value })}
-                  required
-                  mask="(11) 11111-1111"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="email@email.com"
-                  value={newBeneficiary.email}
-                  onChange={(e) => setNewBeneficiary({ ...newBeneficiary, email: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <SelectQualification />
-              </div>
-
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="identification">
-                  Como você quer ser identificado pelo cliente?
-                </Label>
-                <Input
-                  id="identification"
-                  placeholder="Escritório/Nome"
-                  value={nick}
-                  onChange={(e) => setNick(e.target.value)}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="select-client">
-                  Selecione o Cliente <span className="text-red-500">*</span>
-                </Label>
-                <DebounceCombobox
-                  id="idClient"
-                  fetchOptions={handleFetchBeneficiary}
-                  options={beneficiaryOptions}
-                  className="w-full"
-                  value={idBeneficiary}
-                  setValue={setIdBeneficiary}
-                  buttonWidth="200px"
-                  placeholder="Selecione o cliente"
-                  inputPlaceholder="Digite o nome do cliente"
-                  emptyMessage="Nenhum cliente encontrado"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <SelectQualification />
-              </div>
-
-              <div className="col-span-2 space-y-2">
-                <Label htmlFor="identification2">
-                  Como você quer ser identificado pelo cliente?
-                </Label>
-                <Input
-                  id="identification2"
-                  placeholder="Escritório/Nome"
-                  value={nick}
-                  onChange={(e) => setNick(e.target.value)}
-                />
-              </div>
-            </div>
+      ) : (
+        <div className="space-y-4">
+          {beneficiaries.length === 0 && (
+            <>
+              <p className="text-sm text-muted-foreground text-center">
+                Nenhum beneficiário adicionado
+              </p>
+            </>
           )}
-          <div className="flex justify-end gap-2">
-            <PopConfirm
-              title="Deseja realmente cancelar?"
-              description="Ao cancelar, você perderá todas as alterações feitas."
-              onConfirm={handleCancel}
-            >
-              <Button variant="outline" onClick={handleCancel} disabled={isSaving}> <X size={16} className="mr-2" /> Cancelar</Button>
-            </PopConfirm>
-            <PopConfirm
-              title="Deseja realmente salvar?"
-              description="Ao salvar, você perderá todas as alterações feitas."
-              onConfirm={handleSave}
-            >
-              <Button variant="default" disabled={isSaving}> <Save size={16} className="mr-2" /> Salvar</Button>
-            </PopConfirm>
+          {beneficiaries.map((beneficiary, index) => (
+            <>
+              <ClientForm
+                key={index}
+                index={index}
+                formData={beneficiary}
+                updateBeneficiary={updateBeneficiaries}
+                errors={errors}
+                removeBeneficiary={removeBeneficiary}
+                isLoading={isUpdatingBeneficiary}
+              />
+              {isEditing[index] && (
+                <div style={{ marginBottom: '40px' }}>
+                  <Button onClick={() => handleSave(index)}>
+                    <Save /> Salvar Beneficiário
+                  </Button>
+                </div>
+              )}
+            </>
+          ))}
+          <div className="flex" style={{ marginTop: '50px' }}>
+            <Button onClick={addBeneficiary} variant="outline" className="w-full">
+              <Plus /> Adicionar Beneficiário
+            </Button>
+
           </div>
-        </>
-      }
-    </div>
+        </div>
+      )}
+    </>
   )
 } 

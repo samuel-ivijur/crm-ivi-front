@@ -1,13 +1,32 @@
-import { useState, createContext, useContext, ReactNode, useCallback, useMemo } from 'react'
-import { LitigationParams, LitigationParamsClient, litigationsService } from '@/services/api/litigations';
+import { useState, createContext, useContext, ReactNode } from 'react'
+import { CaseCover, LitigationParamsClient, LitigationParamsTask, litigationsService, RelatedProcesses } from '@/services/api/litigations';
 import { LitigationStatus } from '@/constants';
 import { DeadlinesForm, PartiesForm, ProcessDataForm, RelatedProcessesForm } from '@/components/process-form';
-import { ClientForm } from '../components/process-form/steps';
+import { ModalClientForm } from '../components/process-form/steps';
 import { AdversyParty } from '@/types/adversy-party';
 import { RelatedProcess } from '@/types/process';
 import { useAuth } from '@/hooks/useAuth';
+import { beneficiariesService } from '@/services/api/beneficiaries';
 
-type FormData = LitigationParams & { selectClient: boolean }
+export type BeneficiaryFormData = {
+  selectClient: boolean;
+  idClient?: string;
+  beneficiary?: LitigationParamsClient 
+  idQualification?: number;
+  nick?: string;
+}
+type FormData = {
+  processNumber: string;
+  instance: number;
+  uf?: number;
+  idStatus?: LitigationStatus;
+  obs?: string;
+  adverseParty?: Omit<AdversyParty, 'id'>[];
+  caseCover: CaseCover
+  tasks?: LitigationParamsTask[];
+  relatedProcesses?: RelatedProcesses[];
+  beneficiaries: BeneficiaryFormData[]
+}
 const initialState: FormData = {
   processNumber: '',
   instance: 0,
@@ -16,12 +35,7 @@ const initialState: FormData = {
   adverseParty: [],
   tasks: [],
   relatedProcesses: [],
-  client: {
-    name: '',
-    phone: '',
-    idQualification: 0
-  },
-  selectClient: false
+  beneficiaries: []
 }
 interface Step {
   id: number;
@@ -33,6 +47,8 @@ interface ProcessModalFormContextProps {
   formData: FormData;
   currentStep: number;
   updateFormData: (step: keyof FormData, data: any) => void;
+  addBeneficiary: () => void;
+  removeBeneficiary: (index: number) => void;
   updateCaseCover: (key: keyof FormData["caseCover"], data: any) => void;
   handleNext: () => boolean;
   handlePrevious: () => void;
@@ -40,6 +56,7 @@ interface ProcessModalFormContextProps {
   steps: Step[];
   errors: { [key: string]: string };
   resetForm: () => void;
+  updateBeneficiaries: (index: number, field: keyof BeneficiaryFormData, data: any) => void;
 }
 
 export const ProcessModalFormContext = createContext<ProcessModalFormContextProps | undefined>(undefined);
@@ -64,7 +81,7 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
         errors={errors}
       />,
       validate: (): boolean => {
-        const requiredFields: Array<keyof LitigationParams> = ['processNumber', 'instance']
+        const requiredFields: Array<keyof FormData> = ['processNumber', 'instance']
         const newErrors: { [key: string]: string } = {}
         if (String(formData.processNumber).replace(/\D/g, '').length < 20) {
           newErrors.processNumber = 'Número do processo inválido'
@@ -122,23 +139,26 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     {
       id: 5,
       title: "Cliente",
-      component: <ClientForm />,
+      component: <ModalClientForm />,
       validate: () => {
-        const requiredFieldsRegister: Array<keyof LitigationParamsClient> = ['name', 'phone', 'idQualification']
+        if (!formData.beneficiaries) return true
 
+        const requiredFieldsRegister: Array<keyof LitigationParamsClient> = ['name']
         const newErrors: { [key: string]: string } = {}
-        if (formData.selectClient && !formData.idClient) {
-          newErrors.idClient = 'Campo obrigatório'
-        } else if (!formData.selectClient) {
-          if (String(formData?.client?.phone).replace(/\D/g, '').length < 10) {
-            newErrors.phone = 'Número de telefone inválido'
+
+        formData.beneficiaries?.forEach((beneficiary, index) => {
+          if (beneficiary.selectClient && !beneficiary.idClient) {
+            newErrors[`idClient-${index}`] = 'Campo obrigatório'
+          } else if (!beneficiary.selectClient) {
+            if (beneficiary.beneficiary?.phone && String(beneficiary.beneficiary?.phone).replace(/\D/g, '').length < 10) {
+              newErrors[`phone-${index}`] = 'Número de telefone inválido'
+            }
+            requiredFieldsRegister.forEach(field => {
+              !beneficiary.beneficiary?.[field] && (newErrors[`${field}-${index}`] = 'Campo obrigatório')
+            })
           }
-          requiredFieldsRegister.forEach(field => {
-            !formData.client?.[field] && (newErrors[field] = 'Campo obrigatório')
-          })
-        }
+        })
         setErrors(newErrors)
-        console.log(newErrors)
         return Object.keys(newErrors).length === 0
       }
     },
@@ -148,11 +168,27 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     setFormData(prev => ({ ...prev, caseCover: { ...prev.caseCover, [key]: data } }))
   }
 
+  const updateBeneficiaries = (index: number, field: keyof BeneficiaryFormData, data: any) => {
+    const newBeneficiaries = Array.isArray(formData.beneficiaries) ? [...formData.beneficiaries] : []
+    newBeneficiaries[index] = { ...newBeneficiaries[index], [field]: data }
+    setFormData(prev => ({ ...prev, beneficiaries: newBeneficiaries }))
+  }
+
+  const addBeneficiary = () => {
+    if (!steps[currentStep - 1].validate()) return
+    setFormData(prev => ({ ...prev, beneficiaries: [...prev.beneficiaries, { selectClient: true, idClient: undefined, beneficiary: undefined }] }))
+  }
+
+  const removeBeneficiary = (index: number) => {
+    const newBeneficiaries = Array.isArray(formData.beneficiaries) ? [...formData.beneficiaries] : []
+    newBeneficiaries.splice(index, 1)
+    setFormData(prev => ({ ...prev, beneficiaries: newBeneficiaries }))
+  }
+
   const handleNext = (): boolean => {
     if (!steps[currentStep - 1].validate()) return false
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
-      console.log(formData)
       return true
     }
     return false
@@ -168,14 +204,42 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (!steps[currentStep - 1].validate()) return false
 
-      await litigationsService.createLitigation({
+      const { beneficiaries, ...litigation } = formData
+      const { id: idLitigation } = await litigationsService.saveLitigation({
         idOrganization: getSelectedOrganization(),
-        litigations: [{
-          ...formData,
-          idClient: formData.selectClient ? formData.idClient : undefined,
-          client: formData.selectClient ? undefined : formData.client,
-        }]
+        ...litigation
       })
+
+      await Promise.all(beneficiaries.map(async (beneficiary) => {
+        if (beneficiary.selectClient) {
+          await litigationsService.saveLitigationBeneficiary({
+            idOrganization: getSelectedOrganization(),
+            idLitigation,
+            idBeneficiary: beneficiary.idClient!,
+            idQualification: beneficiary.idQualification!,
+            nick: beneficiary.nick!,
+            communicate: true
+          })
+        } else {
+          const { id: idBeneficiary } = await beneficiariesService.save({
+            idOrganization: getSelectedOrganization(),
+            name: beneficiary.beneficiary?.name!,
+            idType: beneficiary.beneficiary?.idType!,
+            phone: beneficiary.beneficiary?.phone!,
+            birthDate: beneficiary.beneficiary?.birthDate!,
+            document: beneficiary.beneficiary?.document!,
+            email: beneficiary.beneficiary?.email!,
+          })
+          await litigationsService.saveLitigationBeneficiary({
+            idOrganization: getSelectedOrganization(),
+            idLitigation,
+            idBeneficiary,
+            idQualification: beneficiary.idQualification!,
+            nick: beneficiary.nick!,
+            communicate: true,
+          })
+        }
+      }))
 
       return true;
     } catch (error) {
@@ -200,6 +264,9 @@ export const ProcessFormProvider = ({ children }: { children: ReactNode }) => {
         handlePrevious,
         handleSubmit,
         updateCaseCover,
+        updateBeneficiaries,
+        addBeneficiary,
+        removeBeneficiary,
         steps,
         errors,
         resetForm

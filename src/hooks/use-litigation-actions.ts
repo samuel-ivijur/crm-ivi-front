@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLitigation } from "@/hooks/useLitigations";
 import { litigationsService } from "@/services/api/litigations";
-import { LitigationMonitoringType } from "@/constants";
+import { LitigationMonitoringType, LitigationStatus } from "@/constants";
 
 export const useLitigationActions = () => {
   const { getSelectedOrganization } = useAuth();
@@ -28,8 +28,19 @@ export const useLitigationActions = () => {
     setTimeout(invalidateQuery, 500);
   };
 
+  const archiveLitigation = async (id: string, archive: boolean) => {
+    await litigationsService.updateLitigation({
+      idOrganization: selectedOrganization,
+      idStatus: archive ? LitigationStatus.ARCHIVED : LitigationStatus.ACTIVE,
+      id,
+    });
+
+    setTimeout(invalidateQuery, 500);
+  };
+
   return {
     changeMonitoring,
     deleteLitigation,
+    archiveLitigation,
   };
 };

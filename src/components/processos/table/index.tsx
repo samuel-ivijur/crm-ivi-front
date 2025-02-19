@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { litigationTableColumns } from "./columns"
 import { LitigationDataTableToolbar } from "./data-table-toolbar"
 import { GetLitigations } from "@/services/api/litigations"
@@ -28,6 +28,7 @@ import { GetLitigationParams } from "@/hooks/useLitigations"
 import Pagination from "@/components/pagination"
 import { useLitigationActions } from "@/hooks/use-litigation-actions"
 import { useRouter } from "next/navigation"
+import { LitigationTableAction } from "./type"
 
 type LitigationTableProps = {
   data: {
@@ -49,8 +50,9 @@ export function LitigationTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState<Set<string>>(new Set())
   const [isAllSelected, setIsAllSelected] = useState(false)
-  const { changeMonitoring, deleteLitigation } = useLitigationActions()
+  const { changeMonitoring, deleteLitigation, archiveLitigation } = useLitigationActions()
   const router = useRouter()
+  const [performingActions, setPerformingActions] = useState<LitigationTableAction | null>(null)
 
   const selectAll = (data: GetLitigations.LitigationInfo[], checked: boolean) => {
     let newRowSelection = new Set(rowSelection)
@@ -113,7 +115,10 @@ export function LitigationTable({
       data: data.data,
       changeMonitoring,
       deleteLitigation,
-      viewLitigation
+      archiveLitigation,
+      viewLitigation,
+      performingActions,
+      setPerformingActions
     }))
   }, [data.data, rowSelection, isAllSelected])
 

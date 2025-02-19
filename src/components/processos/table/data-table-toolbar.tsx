@@ -17,6 +17,7 @@ import { ValueOf } from "next/dist/shared/lib/constants"
 import { LitigationMonitoringType, LitigationStatus, LitigationStatusLabels } from "@/constants/litigation"
 import PopConfirm from "@/components/popconfirm"
 import { useAuth } from "@/hooks/useAuth"
+import { useState } from "react"
 
 interface LitigationDataTableToolbarProps {
   table: Table<GetLitigations.LitigationInfo>
@@ -26,6 +27,7 @@ interface LitigationDataTableToolbarProps {
   total: number
 }
 
+
 export function LitigationDataTableToolbar({
   table,
   selectedRows,
@@ -34,10 +36,18 @@ export function LitigationDataTableToolbar({
   total
 }: LitigationDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0
-  const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
+  const { filter, changeFilter } = useLitigation()
   const { getSelectedOrganization } = useAuth()
   const debounceTime = 500
   const idOrganization = getSelectedOrganization()
+
+  const getSelectMonitoringValue = (): string => {
+    if (filter.idTypeMonitoring && +filter.idTypeMonitoring === LitigationMonitoringType.PUBLICATIONS && String(filter.idStatusMonitoring) === "true") return "true"
+    else if (filter.idStatusMonitoring === undefined) return "all"
+    else return "false"
+  }
+
+  const [monitoringValue, setMonitoringValue] = useState<string | null>(getSelectMonitoringValue())
 
   let debounceTimeout: NodeJS.Timeout | null = null
   const debounceFilter = async (key: keyof typeof filter, value: any): Promise<void> => {
@@ -70,6 +80,23 @@ export function LitigationDataTableToolbar({
   const handleSelectChange = (key: keyof typeof filter, value: ValueOf<typeof LitigationStatus> | string | null) => {
     if (value === "null") value = null
     changeFilter({ [key]: value })
+  }
+
+  const handleSelectMonitoringChange = (value: string | null) => {
+    if (value === "null") value = null
+    if (value === "true"){
+      changeFilter({ idTypeMonitoring: LitigationMonitoringType.PUBLICATIONS, idStatusMonitoring: true })
+      setMonitoringValue("true")
+    }
+    else if (value === "false"){
+      changeFilter({ idTypeMonitoring: undefined, idStatusMonitoring: false })
+      setMonitoringValue("false")
+    }
+    else if (value === "all" || value === null){
+      changeFilter({ idTypeMonitoring: undefined, idStatusMonitoring: undefined })
+      setMonitoringValue(null)
+    }
+
   }
 
   return (
@@ -122,32 +149,18 @@ export function LitigationDataTableToolbar({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Comunicação</Label>
-                <Select
-
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="Ativa">Ativa</SelectItem>
-                    <SelectItem value="Inativa">Inativa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
                 <Label>Monitoramento</Label>
                 <Select
-
+                  value={monitoringValue as string}
+                  onValueChange={(value) => handleSelectMonitoringChange(value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value={null as unknown as string}>Todos</SelectItem>
+                    <SelectItem value={"true"}>Monitoramento Ativo</SelectItem>
+                    <SelectItem value={"false"}>Monitoramento Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
