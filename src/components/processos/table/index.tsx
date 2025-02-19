@@ -102,7 +102,7 @@ export function LitigationTable({
   })
 
   useEffect(() => {
-    const isAllSelected = !data.data.some((row) => !rowSelection.has(row.id))
+    const isAllSelected = data.data.length > 0 && !data.data.some((row) => !rowSelection.has(row.id))
     setIsAllSelected(isAllSelected)
   }, [data.data, rowSelection])
 
@@ -169,7 +169,7 @@ export function LitigationTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={litigationTableColumns.length}
+                  colSpan={columns.length}
                   className="h-24 text-center"
                 >
                   Nenhum resultado encontrado.
