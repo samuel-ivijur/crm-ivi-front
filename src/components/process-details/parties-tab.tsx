@@ -33,9 +33,9 @@ type PageParty = Party & {
 
 export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLitigation }: PartiesTabProps) {
   const [parties, setParties] = useState<PageParty[]>([])
-  const [selectedParty, setSelectedParty] = useState<PageParty | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+
   useEffect(() => {
     if (!data) return
 
@@ -49,16 +49,6 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
     })))
   }, [data])
 
-  const handleSelectChange = (id: String) => {
-    const party = parties.find(party => party.id === +id)
-    if (!party) return toast({
-      title: "Erro ao selecionar a parte!",
-      description: "Não foi possível selecionar a parte. Tente novamente mais tarde.",
-      variant: "destructive",
-    })
-    setSelectedParty(party)
-  }
-
   const addParty = () => {
     const partNotSaved = parties.find(party => party.id === 0)
     if (partNotSaved) {
@@ -67,7 +57,6 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         description: "Finalize a edição da parte selecionada antes de adicionar uma nova parte.",
         variant: "destructive",
       })
-      setSelectedParty(partNotSaved)
       return
     }
     const newParty: PageParty = {
@@ -78,30 +67,26 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
       partyType: undefined,
       modified: false,
     }
-    setParties(prevParties => {
-      const updatedParties = [...prevParties, newParty]
-      setSelectedParty(newParty)
-      return updatedParties
-    })
+    setParties(prevParties => [...prevParties, newParty])
   }
 
-  const updateSelectedParty = (field: keyof Party, value: string) => {
-    if (!selectedParty) return
-    const updatedParty = { ...selectedParty, [field]: value, modified: true }
-    if (field === 'personType' && +value === PersonType.PERSON) {
-      updatedParty.document = String(updatedParty.document).replace(/\D/g, '').slice(0, 11)
-    }
-    setSelectedParty(updatedParty)
+  const updateParty = (id: number, field: keyof Party, value: string) => {
     setParties(prevParties => {
       const updatedParties = [...prevParties]
-      const index = updatedParties.findIndex(party => party.id === updatedParty.id)
-      if (index !== -1) updatedParties[index] = updatedParty
+      const index = updatedParties.findIndex(party => party.id === id)
+      if (index !== -1) {
+        const updatedParty = { ...updatedParties[index], [field]: value, modified: true }
+        if (field === 'personType' && +value === PersonType.PERSON) {
+          updatedParty.document = String(updatedParty.document).replace(/\D/g, '').slice(0, 11)
+        }
+        updatedParties[index] = updatedParty
+      }
       return updatedParties
     })
   }
 
-  const handleCancel = () => {
-    const originalPartyData = data?.adverseParties.find(party => party.id === selectedParty?.id)
+  const handleCancel = (id: number) => {
+    const originalPartyData = data?.adverseParties.find(party => party.id === id)
     if (originalPartyData) {
       setParties(prevParties => {
         const updatedParties = [...prevParties]
@@ -115,11 +100,10 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         return updatedParties
       })
     }
-    setSelectedParty(null)
   }
 
-  const validateParty = (): boolean => {
-    if (!data || !selectedParty) {
+  const validateParty = (party: PageParty): boolean => {
+    if (!data || !party) {
       toast({
         title: "Erro ao salvar a parte!",
         description: "Não foi possível salvar a parte. Tente novamente mais tarde.",
@@ -130,10 +114,10 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
     return true
   }
 
-  const handleSave = async () => {
+  const handleSave = async (party: PageParty) => {
     try {
-      if (!validateParty()) return
-      if (!selectedParty?.partyType || !selectedParty?.personType || !selectedParty?.name) {
+      if (!validateParty(party)) return
+      if (!party.partyType || !party.personType || !party.name) {
         toast({
           title: "Atenção!",
           description: "Preencha todos os campos obrigatórios.",
@@ -143,10 +127,10 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
       }
 
       setIsSaving(true)
-      if (selectedParty!.id) {
+      if (party.id) {
         await litigationsService.removeAdverseParty({
           id: data!.id,
-          idAdverseParty: selectedParty!.id,
+          idAdverseParty: party.id,
           idOrganization: data!.organization.id,
         })
         invalidateLitigation(data!.id)
@@ -155,14 +139,13 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
         idLitigation: data!.id,
         idOrganization: data!.organization.id,
         adverseParty: {
-          name: selectedParty!.name,
-          document: selectedParty?.document || '',
-          idType: +selectedParty!.partyType!,
-          idPersonType: selectedParty!.personType ? +selectedParty!.personType : PersonType.PERSON,
+          name: party.name,
+          document: party.document || '',
+          idType: +party.partyType,
+          idPersonType: party.personType ? +party.personType : PersonType.PERSON,
         },
       })
       invalidateLitigation(data!.id)
-      setSelectedParty(null)
       toast({
         title: "Sucesso!",
         description: "A parte foi salva com sucesso.",
@@ -178,24 +161,22 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
     finally {
       setIsSaving(false)
     }
-
   }
 
-  const handleRemoveParty = async () => {
+  const handleRemoveParty = async (party: PageParty) => {
     try {
-      if (!validateParty()) return
+      if (!validateParty(party)) return
 
       setIsRemoving(true)
-      if (selectedParty!.id) {
+      if (party.id) {
         await litigationsService.removeAdverseParty({
           id: data!.id,
-          idAdverseParty: selectedParty!.id,
+          idAdverseParty: party.id,
           idOrganization: data!.organization.id,
         })
         invalidateLitigation(data!.id)
       }
-      else setParties(prevParties => prevParties.filter(party => party.id !== selectedParty?.id))
-      setSelectedParty(null)
+      setParties(prevParties => prevParties.filter(p => p.id !== party.id))
       toast({
         title: "Sucesso!",
         description: "A parte foi removida com sucesso.",
@@ -213,172 +194,153 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Select
-          onValueChange={handleSelectChange}
-          value={selectedParty?.id !== undefined ? String(selectedParty?.id) : undefined}
-          key={parties.length + (selectedParty?.id || 0).toString()}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione uma parte" />
-          </SelectTrigger>
-          <SelectContent>
-            {parties.length === 0 ? <SelectItem value="0" disabled>Nenhuma parte encontrada</SelectItem> : parties.map((party, index) => (
-              <SelectItem key={party.id} value={party.id?.toString()}>
-                {index + 1} - {party.name} {party.document && `- ${String(party.document).replace(/\D/g, '')}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {(data?.adverseParties || []).length > 0 ? (
+        <>
+          {parties.map(party => (
+            <div className="space-y-4 rounded-lg border p-4 w-full" key={party.id}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Parte Selecionada</h3>
+                <PopConfirm
+                  title="Deseja realmente excluir a parte?"
+                  onConfirm={() => handleRemoveParty(party)}
+                  autoConfirm={party.id === 0 && !party.modified}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600"
+                    disabled={isSaving}
+                    loading={isRemoving}
+                  >
+                    <Trash2 className="h-4 w-4" /> Remover
+                  </Button>
+                </PopConfirm>
+              </div>
 
-        <Button
-          type="button"
-          variant="default"
-          className="border-dashed"
-          onClick={addParty}
-          disabled={isSaving || isRemoving}
-        >
-          <Plus size={16} className="mr-2" /> Adicionar parte
-        </Button>
-      </div>
-
-      {selectedParty ? (
-        <div className="space-y-4 rounded-lg border p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Parte Selecionada</h3>
-            <PopConfirm
-              title="Deseja realmente excluir a parte?"
-              onConfirm={handleRemoveParty}
-              autoConfirm={selectedParty?.id === 0 && !selectedParty.modified}
-            >
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-600"
-                disabled={isSaving}
-                loading={isRemoving}
-              >
-                <Trash2 className="h-4 w-4" /> Remover
-              </Button>
-            </PopConfirm>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor={`name-${selectedParty.id}`}>
-                Nome <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id={`name-${selectedParty.id}`}
-                placeholder="Nome da parte"
-                value={selectedParty.name}
-                onChange={(e) => updateSelectedParty('name', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              {((selectedParty.personType && +selectedParty.personType) || PersonType.PERSON) === PersonType.PERSON ? (
-                <>
-                  <Label htmlFor={`document-${selectedParty.id}-${PersonType.PERSON}`}>
-                    CPF
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor={`name-${party.id}`}>
+                    Nome <span className="text-red-500">*</span>
                   </Label>
-                  <CustomMaskedInput
-                    id={`document-${selectedParty.id}-${PersonType.PERSON}`}
-                    key={`document-${selectedParty.id}-${PersonType.PERSON}`}
-                    mask="111.111.111-11"
-                    placeholder="___.___.___-__"
-                    value={selectedParty.document || ''}
-                    onChange={(e) => updateSelectedParty('document', e.target.value)}
-                    placeholderChar="_"
-                    disabled={!selectedParty.personType}
+                  <Input
+                    id={`name-${party.id}`}
+                    placeholder="Nome da parte"
+                    value={party.name}
+                    onChange={(e) => updateParty(party.id, 'name', e.target.value)}
                   />
-                </>
-              ) : (
-                <>
-                  <Label htmlFor={`document-${selectedParty.id}-${PersonType.COMPANY}`}>
-                    CNPJ
+                </div>
+
+                <div className="space-y-2">
+                  {((party.personType && +party.personType) || PersonType.PERSON) === PersonType.PERSON ? (
+                    <>
+                      <Label htmlFor={`document-${party.id}-${PersonType.PERSON}`}>
+                        CPF
+                      </Label>
+                      <CustomMaskedInput
+                        id={`document-${party.id}-${PersonType.PERSON}`}
+                        key={`document-${party.id}-${PersonType.PERSON}`}
+                        mask="111.111.111-11"
+                        placeholder="___.___.___-__"
+                        value={party.document || ''}
+                        onChange={(e) => updateParty(party.id, 'document', e.target.value)}
+                        placeholderChar="_"
+                        disabled={!party.personType}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Label htmlFor={`document-${party.id}-${PersonType.COMPANY}`}>
+                        CNPJ
+                      </Label>
+                      <CustomMaskedInput
+                        id={`document-${party.id}-${PersonType.COMPANY}`}
+                        key={`document-${party.id}-${PersonType.COMPANY}`}
+                        mask="11.111.111/1111-11"
+                        placeholder="__.___.___/____-__"
+                        value={party.document || ''}
+                        onChange={(e) => updateParty(party.id, 'document', e.target.value)}
+                        placeholderChar="_"
+                        disabled={!party.personType}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`person-type-${party.id}`}>
+                    Tipo de pessoa <span className="text-red-500">*</span>
                   </Label>
-                  <CustomMaskedInput
-                    id={`document-${selectedParty.id}-${PersonType.COMPANY}`}
-                    key={`document-${selectedParty.id}-${PersonType.COMPANY}`}
-                    mask="11.111.111/1111-11"
-                    placeholder="__.___.___/____-__"
-                    value={selectedParty.document || ''}
-                    onChange={(e) => updateSelectedParty('document', e.target.value)}
-                    placeholderChar="_"
-                    disabled={!selectedParty.personType}
-                  />
-                </>
-              )}
-            </div>
+                  <Select
+                    value={party.personType?.toString()}
+                    onValueChange={(value) => updateParty(party.id, 'personType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de pessoa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {personTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor={`person-type-${selectedParty.id}`}>
-                Tipo de pessoa <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={selectedParty.personType?.toString()}
-                onValueChange={(value) => updateSelectedParty('personType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo de pessoa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {personTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value.toString()}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-2">
+                  <Label htmlFor={`party-type-${party.id}`}>
+                    Tipo de parte <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={party.partyType?.toString()}
+                    onValueChange={(value) => updateParty(party.id, 'partyType', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo da parte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {adversePartyTypeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                {
+                  party.id !== 0 &&
+                  <Button
+                    variant="outline"
+                    onClick={() => handleCancel(party.id)}
+                    disabled={!party.modified}> <X size={16} className="mr-2"
+                    />
+                    Cancelar edição
+                  </Button>
+                }
+                <Button
+                  variant="default"
+                  onClick={() => handleSave(party)}
+                  disabled={!party.modified || isRemoving}
+                  loading={isSaving}
+                > <Save size={16} className="mr-2" /> Salvar</Button>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`party-type-${selectedParty.id}`}>
-                Tipo de parte <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={selectedParty.partyType?.toString()}
-                onValueChange={(value) => updateSelectedParty('partyType', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo da parte" />
-                </SelectTrigger>
-                <SelectContent>
-                  {adversePartyTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value.toString()}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            {
-              selectedParty.id !== 0 &&
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={!selectedParty.modified}> <X size={16} className="mr-2"
-                />
-                Cancelar edição
-              </Button>
-            }
-            <Button
-              variant="default"
-              onClick={handleSave}
-              disabled={!selectedParty.modified || isRemoving}
-              loading={isSaving}
-            > <Save size={16} className="mr-2" /> Salvar</Button>
-          </div>
-        </div>
+          ))}
+        </>
       ) : (
-        <div className="space-y-4 rounded-lg border p-4 flex flex-col items-center justify-center">
-          <Image src={NoData} alt="Nenhuma parte selecionada" width={200} height={200} />
-          <p className="text-sm text-gray-500">Nenhuma parte selecionada</p>
+        <div className="flex items-center justify-center h-full">
+          <Image src={NoData} alt="No data" />
+          <p className="text-sm text-gray-500">Nenhuma parte adicionada</p>
         </div>
       )}
+      <div className="flex items-center space-x-4">
+        <Button variant="outline" onClick={addParty} className="w-full">
+          <Plus className="w-4 h-4" />
+          Adicionar parte
+        </Button>
+      </div>
     </div>
   )
 } 
