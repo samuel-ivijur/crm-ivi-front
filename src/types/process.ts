@@ -34,14 +34,15 @@ export interface Deadline {
   name: string
   responsible: string
   date: string
-  priority: string
-  status: "Pendente" | "Concluído"
+  time: string
+  priority: number
+  status: number
 }
 
 export interface RelatedProcess {
   id: number
-  number: string
-  instance: string
+  processNumber: string
+  instance: number
 }
 
 export interface ClientData {

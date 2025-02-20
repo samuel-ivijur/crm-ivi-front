@@ -5,107 +5,187 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/utils/cn"
 import { Button } from "@/components/ui/button"
-import dynamic from 'next/dynamic'
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Menu, ChevronDown, LayoutDashboard, Users, GavelIcon, MessagesSquare, UserCheck, HelpCircle } from "lucide-react"
+import { BsWhatsapp } from 'react-icons/bs'
+import { useSidebar } from "./sidebar-context"
+import { Logo } from "./logo"
 
-// Importação dinâmica dos ícones
-const Home = dynamic(() => import('lucide-react').then(mod => mod.Home))
-const Files = dynamic(() => import('lucide-react').then(mod => mod.Files))
-const HeadphonesIcon = dynamic(() => import('lucide-react').then(mod => mod.Headphones))
+const sidebarItems = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
+  },
+  {
+    title: "Clientes",
+    icon: Users,
+    href: "/clientes",
+  },
+  {
+    title: "Processos",
+    icon: GavelIcon,
+    href: "/processos",
+  },
+  {
+    title: "Comunicação",
+    icon: MessagesSquare,
+    items: [
+      {
+        title: "Atendimentos",
+        icon: BsWhatsapp,
+        href: "/comunicacao/atendimentos",
+      },
+      {
+        title: "Habilitados",
+        icon: UserCheck,
+        href: "/comunicacao/habilitados",
+      },
+    ],
+  },
+  {
+    title: "Ajuda",
+    icon: HelpCircle,
+    href: "/faq",
+  }
+]
+
+function SidebarContent() {
+  const pathname = usePathname()
+  const { isCollapsed, setIsCollapsed } = useSidebar()
+  const [isCommunicationOpen, setIsCommunicationOpen] = useState(false)
+
+  const isActive = (path: string) => pathname.startsWith(path)
+
+  return (
+    <div 
+      className="flex h-full flex-col bg-[#225BE4]"
+      onMouseEnter={() => setIsCollapsed(false)}
+      onMouseLeave={() => {
+        setIsCollapsed(true)
+        setIsCommunicationOpen(false)
+      }}
+    >
+      {/* Logo Container */}
+      <div className={cn(
+        "sticky top-0 z-10 border-b border-white/10",
+        "flex items-center justify-center",
+        isCollapsed ? "p-3" : "p-4"
+      )}>
+        <Logo className={cn(
+          "transition-all duration-300",
+          isCollapsed ? "h-8 w-8" : "h-10 w-auto"
+        )} />
+      </div>
+
+      {/* Menu Items */}
+      <ScrollArea className="flex-1 py-3 px-3">
+        {sidebarItems.map((item) => (
+          <div key={item.title} className="mb-1">
+            {item.items ? (
+              <>
+                <button
+                  onClick={() => setIsCommunicationOpen(!isCommunicationOpen)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg p-2",
+                    "text-white hover:bg-white/10",
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-5 w-5" />
+                    {!isCollapsed && <span>{item.title}</span>}
+                  </div>
+                  {!isCollapsed && (
+                    <ChevronDown className="h-4 w-4 transition-transform" />
+                  )}
+                </button>
+
+                {isCommunicationOpen && !isCollapsed && (
+                  <div className="ml-3 mt-1 space-y-1">
+                    {item.items.map((subitem) => (
+                      <Link
+                        key={subitem.href}
+                        href={subitem.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg p-2",
+                          isActive(subitem.href)
+                            ? "bg-white/20 text-white"
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        )}
+                      >
+                        <subitem.icon className="h-5 w-5" />
+                        <span>{subitem.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg p-2",
+                  isActive(item.href)
+                    ? "bg-white/20 text-white"
+                    : "text-white/80 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                {!isCollapsed && <span>{item.title}</span>}
+              </Link>
+            )}
+          </div>
+        ))}
+      </ScrollArea>
+    </div>
+  )
+}
 
 export function Sidebar() {
+  const { isCollapsed } = useSidebar()
   const [mounted, setMounted] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const pathname = usePathname()
-
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true)
-  }, [])
-
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false)
-  }, [])
-
-  const isActive = useCallback((path: string) => {
-    return pathname.startsWith(path)
-  }, [pathname])
 
   useEffect(() => {
     setMounted(true)
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
   if (!mounted) {
-    return <div className="w-16 border-r" />
+    return null
   }
 
   return (
-    <div
-      className={cn(
-        "fixed inset-y-0 left-0 z-40 bg-white transition-all duration-300",
-        isHovered ? "w-64" : "w-16",
-        "border-r"
-      )}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className="flex flex-col h-full">
-        <div className="p-4">
-          <div className="flex items-center justify-between">
-            {isHovered && <span className="text-xl font-bold">IVI LAW</span>}
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-2 p-2">
-          <Link 
-            href="/dashboard" 
-            prefetch={true}
+    <>
+      {/* Versão Mobile */}
+      <Sheet>
+        <SheetTrigger asChild className="lg:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="fixed top-4 left-4 z-50"
           >
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isHovered ? "px-4" : "px-2",
-                isActive('/dashboard') && "bg-blue-50 text-[#0146cf]"
-              )}
-            >
-              <Home className={cn("h-4 w-4", isActive('/dashboard') && "text-[#0146cf]")} />
-              {isHovered && <span className="ml-2">Página Inicial</span>}
-            </Button>
-          </Link>
-          
-          <Link href="/processos" prefetch={true}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isHovered ? "px-4" : "px-2",
-                isActive('/processos') && "bg-blue-50 text-[#0146cf]"
-              )}
-            >
-              <Files className={cn("h-4 w-4", isActive('/processos') && "text-[#0146cf]")} />
-              {isHovered && <span className="ml-2">Processos</span>}
-            </Button>
-          </Link>
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent 
+          side="left" 
+          className="w-[240px] p-0 lg:hidden"
+        >
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
 
-          <Link href="/atendimentos" prefetch={true}>
-            <Button
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                isHovered ? "px-4" : "px-2",
-                isActive('/atendimentos') && "bg-blue-50 text-[#0146cf]"
-              )}
-            >
-              <HeadphonesIcon className={cn("h-4 w-4", isActive('/atendimentos') && "text-[#0146cf]")} />
-              {isHovered && <span className="ml-2">Atendimentos</span>}
-            </Button>
-          </Link>
-        </nav>
-      </div>
-    </div>
+      {/* Versão Desktop */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 hidden lg:block",
+          "bg-[#225BE4] border-r border-white/10",
+          "transition-[width] duration-300 ease-in-out",
+          isCollapsed ? "w-16" : "w-64"
+        )}
+      >
+        <SidebarContent />
+      </aside>
+    </>
   )
 } 

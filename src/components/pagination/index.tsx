@@ -17,7 +17,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
   // Função para gerar a lista de páginas com reticências
   const generatePageNumbers = () => {
     const pages: Array<string | number> = [];
-
+    page = +page
     for (let i = 1; i <= pageCount; i++) {
       if (
         i === 1 || // Primeira página
@@ -31,6 +31,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
       ) {
         pages.push("...");
       }
+     
     }
 
     return pages;
@@ -66,7 +67,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
         variant="outline"
         size="sm"
         onClick={() => setPage(1)}
-        disabled={page === 1}
+        disabled={page == 1}
       >
         {"<<"}
       </Button>
@@ -74,7 +75,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
         variant="outline"
         size="sm"
         onClick={() => setPage(page - 1)}
-        disabled={page === 1}
+        disabled={page == 1}
       >
         Anterior
       </Button>
@@ -82,7 +83,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
       {generatePageNumbers().map((p, index) => (
         <Button
           key={index}
-          variant={p === page ? "default" : "outline"}
+          variant={p == page ? "default" : "outline"}
           size="sm"
           onClick={() => typeof p === "number" && setPage(p)}
           disabled={p === "..."}
@@ -95,7 +96,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
         variant="outline"
         size="sm"
         onClick={() => setPage(page + 1)}
-        disabled={page === pageCount}
+        disabled={page == pageCount}
       >
         Próxima
       </Button>
@@ -103,7 +104,7 @@ export default function Pagination({ page, limit, total, setPage, setLimit }: Pa
         variant="outline"
         size="sm"
         onClick={() => setPage(pageCount)}
-        disabled={page === pageCount}
+        disabled={page == pageCount}
       >
         {">>"}
       </Button>

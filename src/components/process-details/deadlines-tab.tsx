@@ -32,62 +32,127 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { GetLitigation } from "@/services/api/litigations"
+import { useEffect } from "react"
+import { TaskPriorities, TaskPriorityColors, TaskPriorityLabels, TaskStatus, TaskStatusColors, TaskStatusLabels } from "@/constants"
+import { toast } from "@/hooks/use-toast"
+import { TaskService } from "@/services/api/tasks"
+import { Skeleton } from "../ui/skeleton"
+import PopConfirm from "../popconfirm"
+import CustomMaskedInput from "../masked-input"
 
 interface Deadline {
   id: number
   name: string
-  responsible: string
+  idResponsible?: number
   date: Date
-  priority: string
-  status: "Pendente" | "Concluído" | "Cancelado"
+  idPriority: number
+  idStatus: number
 }
 
-export function DeadlinesTab() {
-  const [deadlines, setDeadlines] = useState<Deadline[]>([
-    {
-      id: 1,
-      name: "Audiência de Conciliação",
-      responsible: "-",
-      date: new Date("2025-01-20T08:00:00"),
-      priority: "Urgente",
-      status: "Pendente"
-    }
-  ])
+interface DeadlinesTabProps {
+  data: GetLitigation.Result["data"] | null
+  isLoading: boolean
+  invalidateLitigation: (id: string) => void
+}
+
+export function DeadlinesTab({ data, isLoading, invalidateLitigation }: DeadlinesTabProps) {
+  const [deadlines, setDeadlines] = useState<Deadline[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>()
-  const [selectedTime, setSelectedTime] = useState("08:00")
+  const [selectedTime, setSelectedTime] = useState("0800")
+  const [name, setName] = useState("")
+  const [responsible, setResponsible] = useState("")
+  const [idPriority, setIdPriority] = useState(TaskPriorities.WithoutPriority)
 
-  const addDeadline = (e: React.FormEvent<HTMLFormElement>) => {
+  const addDeadline = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    if (!selectedDate) return
+    try {
+      if (!data) throw new Error()
 
-    const newDate = new Date(selectedDate)
-    const [hours, minutes] = selectedTime.split(':')
-    newDate.setHours(parseInt(hours), parseInt(minutes))
+      if (!selectedDate || !name) {
+        toast({
+          title: "Erro",
+          description: "Preencha todos os campos obrigatórios",
+          variant: "destructive",
+        })
+        return
+      }
 
-    const newDeadline = {
-      id: deadlines.length + 1,
-      name: formData.get("name") as string,
-      responsible: formData.get("responsible") as string,
-      date: newDate,
-      priority: formData.get("priority") as string,
-      status: "Pendente" as const,
+      const newDate = new Date(selectedDate)
+      const hours = selectedTime.slice(0, 2)
+      const minutes = selectedTime.slice(2, 4)
+      newDate.setHours(parseInt(hours), parseInt(minutes))
+
+      await TaskService.save({
+        idLitigationLink: data.id,
+        idOrganization: data.organization.id,
+        title: name,
+        deadline: newDate.toISOString(),
+        idPriority,
+        idResponsible: responsible ? parseInt(responsible) : undefined,
+      })
+      invalidateLitigation(data.id)
+      setSelectedDate(undefined)
+      setSelectedTime("08:00")
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o prazo/tarefa",
+        variant: "destructive",
+      })
     }
-    setDeadlines([...deadlines, newDeadline])
-    e.currentTarget.reset()
-    setSelectedDate(undefined)
-    setSelectedTime("08:00")
   }
 
-  const updateDeadlineStatus = (id: number, status: "Pendente" | "Concluído" | "Cancelado") => {
-    setDeadlines(deadlines.map(deadline => 
-      deadline.id === id ? { ...deadline, status } : deadline
-    ))
+  const updateDeadlineStatus = async (id: number, status: number) => {
+    try{
+      if (!data) throw new Error()
+      await TaskService.changeStatus({
+        idOrganization: data.organization.id,
+        idStatus: status,
+        idTask: id,
+      })
+      invalidateLitigation(data.id)
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status do prazo/tarefa",
+        variant: "destructive",
+      })
+    }
   }
 
-  const removeDeadline = (id: number) => {
-    setDeadlines(deadlines.filter((deadline) => deadline.id !== id))
+  const removeDeadline = async (id: number) => {
+    try{
+      if (!data) throw new Error()
+      await TaskService.delete({
+        id,
+        idOrganization: data.organization.id,
+      })
+      invalidateLitigation(data.id)
+    } catch (error) {
+      console.log(error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o prazo/tarefa",
+        variant: "destructive",
+      })
+    }
   }
+
+  useEffect(() => {
+    if (!data) return
+
+    setDeadlines(data.tasks.map((task) => ({
+      id: task.id,
+      name: task.title,
+      idResponsible: task.responsible?.id,
+      date: new Date(task.deadline),
+      idPriority: task.priority.id,
+      idStatus: task.status.id
+    })))
+  }, [data])
 
   return (
     <Card>
@@ -105,6 +170,8 @@ export function DeadlinesTab() {
               name="name"
               placeholder="Digite o nome do prazo/tarefa"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
 
@@ -132,22 +199,31 @@ export function DeadlinesTab() {
                   />
                 </PopoverContent>
               </Popover>
-              
+
               <div className="relative w-[90px]">
-                <Input
-                  type="text"
+                <CustomMaskedInput
                   value={selectedTime}
+                  mask="11:11"
                   onChange={(e) => {
                     let value = e.target.value.replace(/\D/g, '')
                     if (value.length > 4) value = value.slice(0, 4)
                     const hours = value.slice(0, 2)
-                    const minutes = value.slice(2, 4)
-                    
-                    if (parseInt(hours) > 23) value = '23' + minutes
+                    let minutes = value.slice(2, 4)
+                    if (parseInt(hours) > 23) {
+                      minutes = minutes || '59'
+                      value = '23' + minutes
+                    }
                     if (parseInt(minutes) > 59) value = hours + '59'
-                    
-                    const formatted = value.padEnd(4, '0')
-                    setSelectedTime(`${formatted.slice(0, 2)}:${formatted.slice(2, 4)}`)
+
+                    setSelectedTime(`${value.slice(0, 2)}${value.slice(2, 4)}`)
+                  }}
+                  onBlur={() => {
+                    if (parseInt(selectedTime.slice(0, 2)) > 23) {
+                      return setSelectedTime('23:59')
+                    }
+                    const hours = selectedTime.slice(0, 2).padStart(2, '0')
+                    const minutes = selectedTime.slice(2, 4).padStart(2, '0')
+                    setSelectedTime(`${hours}${minutes}`)
                   }}
                   className="pl-8"
                   placeholder="00:00"
@@ -163,20 +239,24 @@ export function DeadlinesTab() {
               id="responsible"
               name="responsible"
               placeholder="Digite o responsável"
+              value={responsible}
+              onChange={(e) => setResponsible(e.target.value)}
             />
           </div>
 
           <div className="space-y-2 w-[180px]">
             <Label htmlFor="priority">Prioridade</Label>
-            <Select name="priority" defaultValue="normal">
+            <Select name="priority" defaultValue="normal" 
+              value={String(idPriority)} 
+              onValueChange={(value) => setIdPriority(parseInt(value))}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="baixa">Baixa</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="alta">Alta</SelectItem>
-                <SelectItem value="urgente">Urgente</SelectItem>
+                {Object.entries(TaskPriorities).map(([key, value]) => (
+                  <SelectItem key={key} value={String(value)}>{TaskPriorityLabels[value]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -186,8 +266,13 @@ export function DeadlinesTab() {
             Adicionar
           </Button>
         </form>
-
-        {deadlines.length > 0 && (
+        {isLoading && (
+          <>
+            <Skeleton className="h-[40px]" />
+            <Skeleton className="h-[200px]" />
+          </>
+        )}
+        {(deadlines.length > 0 && !isLoading) && (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -210,38 +295,24 @@ export function DeadlinesTab() {
                       <input type="checkbox" className="h-4 w-4 rounded border-gray-300" />
                     </TableCell>
                     <TableCell>{deadline.name}</TableCell>
-                    <TableCell>{deadline.responsible}</TableCell>
+                    <TableCell>{deadline.idResponsible ? deadline.idResponsible : '-'}</TableCell>
                     <TableCell>
                       {format(deadline.date, "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={
-                          deadline.priority === "urgente"
-                            ? "border-red-500 text-red-500"
-                            : deadline.priority === "alta"
-                            ? "border-orange-500 text-orange-500"
-                            : deadline.priority === "normal"
-                            ? "border-yellow-500 text-yellow-500"
-                            : "border-green-500 text-green-500"
-                        }
+                        style={{ borderColor: TaskPriorityColors[deadline.idPriority], color: TaskPriorityColors[deadline.idPriority] }}
                       >
-                        {deadline.priority}
+                        {TaskPriorityLabels[deadline.idPriority]}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={
-                          deadline.status === "Pendente"
-                            ? "border-yellow-500 text-yellow-500"
-                            : deadline.status === "Concluído"
-                            ? "border-green-500 text-green-500"
-                            : "border-red-500 text-red-500"
-                        }
+                        style={{ borderColor: TaskStatusColors[deadline.idStatus], color: TaskStatusColors[deadline.idStatus] }}
                       >
-                        {deadline.status}
+                        {TaskStatusLabels[deadline.idStatus]}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -249,7 +320,7 @@ export function DeadlinesTab() {
                         <div className="flex justify-end gap-2">
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]">
+                              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]" disabled>
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
@@ -260,7 +331,7 @@ export function DeadlinesTab() {
 
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]">
+                              <Button variant="ghost" size="icon" className="hover:text-[#0146cf]" disabled>
                                 <Edit2 className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
@@ -275,8 +346,8 @@ export function DeadlinesTab() {
                                 variant="ghost"
                                 size="icon"
                                 className="hover:text-green-600"
-                                onClick={() => updateDeadlineStatus(deadline.id, "Concluído")}
-                                disabled={deadline.status === "Concluído"}
+                                onClick={() => updateDeadlineStatus(deadline.id, TaskStatus.COMPLETED)}
+                                disabled={deadline.idStatus === TaskStatus.COMPLETED}
                               >
                                 <Check className="h-4 w-4" />
                               </Button>
@@ -292,8 +363,8 @@ export function DeadlinesTab() {
                                 variant="ghost"
                                 size="icon"
                                 className="hover:text-red-600"
-                                onClick={() => updateDeadlineStatus(deadline.id, "Cancelado")}
-                                disabled={deadline.status === "Cancelado"}
+                                onClick={() => updateDeadlineStatus(deadline.id, TaskStatus.CANCELLED)}
+                                disabled={deadline.idStatus === TaskStatus.CANCELLED}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -305,14 +376,19 @@ export function DeadlinesTab() {
 
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:text-red-600"
-                                onClick={() => removeDeadline(deadline.id)}
+                              <PopConfirm
+                                title="Excluir prazo/tarefa"
+                                description="Tem certeza que deseja excluir o prazo/tarefa?"
+                                onConfirm={() => removeDeadline(deadline.id)}
                               >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="hover:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </PopConfirm>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>Excluir</p>
