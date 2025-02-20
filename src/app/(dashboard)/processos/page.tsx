@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { UF } from "@/constants"
 import { litigationsService, SaveLitigationBulk } from "@/services/api/litigations"
 import { useLitigation } from "@/hooks/useLitigations"
+import { useLitigationReport } from "@/hooks/use-litigation-report"
 
 const qualifications: { [k: string]: number } = {
   recorrido: 1,
@@ -26,18 +27,7 @@ export default function ProcessosPage() {
   const [isModalRegisterOpen, setIsModalRegisterOpen] = useState(false)
   const [isModalImportOpen, setIsModalImportOpen] = useState(false)
   const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
-  const [rowSelection, setRowSelection] = useState<Set<string>>(new Set())
-  const [isAllSelected, setIsAllSelected] = useState(false)
-
-  const selectAll = (checked: boolean) => {
-    let newRowSelection = new Set(rowSelection)
-    getAllLitigationsQuery.data?.data.forEach((row) => {
-      if (checked) newRowSelection.add(row.id)
-      else newRowSelection.delete(row.id)
-    })
-    console.log(getAllLitigationsQuery.data?.data)
-    setRowSelection(newRowSelection)
-  }
+  const { getLitigationReportQuery } = useLitigationReport()
 
   const handleFinishImport = async (
     rows: Array<{ [k: string]: string }>,

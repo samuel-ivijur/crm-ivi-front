@@ -173,6 +173,19 @@ export const litigationsService = {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Erro ao excluir beneficiário do processo');
     }
+  },
+  reportLitigations: async ({ idOrganization }: ReportLitigations.Params): Promise<ReportLitigations.Result> => {
+    const response = await fetch(`${API_URL}/litigations/report?idOrganization=${idOrganization}`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao gerar relatório de processos');
+    }
+
+    return await response.json()
   }
 }
 
@@ -496,4 +509,30 @@ export namespace SaveLitigationBulk {
     idOrganization: string;
     litigations: LitigationParams[];
   }
+}
+
+export namespace ReportLitigations {
+  export type Params = {
+    idOrganization: string;
+  }
+  export type Result = {
+    status: {
+      active: number;
+      archived: number;
+    }
+    externalCourt: {
+      registered: number;
+      archived: number;
+      error: number;
+      judicial: number;
+    }
+    communication: {
+      active: number;
+      inactive: number;
+    }
+    monitoring: {
+      publications: number;
+      progress: number;
+    }
+  };
 }

@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle } from 'lucide-react'
+import { Card } from "@/components/ui/card"
+import { useLitigationReport } from "@/hooks/use-litigation-report"
+import { ReportLitigations } from "@/services/api/litigations"
+import { useEffect, useState } from "react"
 
 interface StatsCardProps {
   title: string
@@ -14,79 +15,15 @@ interface StatsCardProps {
   inactive?: number
 }
 
-function StatsCard({ title, total, stats, active, inactive }: StatsCardProps) {
-  if (stats) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-          {total && (
-            <Badge variant="outline" className="text-[#0146cf] text-lg font-semibold px-3 py-1">
-              {total}
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {stats.map((stat, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">{stat.value}</span>
-                  <CheckCircle className={`h-3.5 w-3.5 ${
-                    stat.type === 'success' ? 'text-green-500' :
-                    stat.type === 'warning' ? 'text-yellow-500' :
-                    stat.type === 'error' ? 'text-red-500' :
-                    'text-blue-500'
-                  }`} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Badge variant="outline" className="text-[#0146cf] text-lg font-semibold px-3 py-1">
-          {total}
-        </Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Ativos</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{active}</span>
-              <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Baixados</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{inactive}</span>
-              <XCircle className="h-3.5 w-3.5 text-red-500" />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function BaseStatsCard({ title, total, stats }: { 
-  title: string, 
-  total?: number | string, 
-  stats: StatsCardProps['stats'] 
+function BaseStatsCard({ title, total, stats }: {
+  title: string,
+  total?: number | string,
+  stats: StatsCardProps['stats']
 }) {
   if (!stats) return null;
-  
+
   const isSingleColumn = stats.length <= 2;
-  
+
   return (
     <Card className="p-3">
       <div className="space-y-3">
@@ -106,12 +43,11 @@ function BaseStatsCard({ title, total, stats }: {
               className="bg-white rounded-md border p-2 text-center space-y-0.5"
             >
               <span className="text-xs text-slate-600 font-medium">{stat.label}</span>
-              <div className={`text-lg font-bold ${
-                stat.type === 'success' ? 'text-green-600' :
-                stat.type === 'info' ? 'text-blue-600' :
-                stat.type === 'warning' ? 'text-yellow-600' :
-                'text-red-600'
-              }`}>
+              <div className={`text-lg font-bold ${stat.type === 'success' ? 'text-green-600' :
+                  stat.type === 'info' ? 'text-blue-600' :
+                    stat.type === 'warning' ? 'text-yellow-600' :
+                      'text-red-600'
+                }`}>
                 {stat.value}
               </div>
             </div>
@@ -123,39 +59,87 @@ function BaseStatsCard({ title, total, stats }: {
 }
 
 export function ProcessStats() {
+  const { getLitigationReportQuery } = useLitigationReport()
+  const [report, setReport] = useState<ReportLitigations.Result>({
+    status: {
+      active: 0,
+      archived: 0,
+    },
+    externalCourt: {
+      registered: 0,
+      archived: 0,
+      error: 0,
+      judicial: 0,
+    },
+    communication: {
+      active: 0,
+      inactive: 0,
+    },
+    monitoring: {
+      publications: 0,
+      progress: 0,
+    },
+  })
+
+  useEffect(() => {
+    if (!getLitigationReportQuery.data) return
+    const newReport: ReportLitigations.Result = {
+      status: {
+        active: getLitigationReportQuery.data.status.active,
+        archived: getLitigationReportQuery.data.status.archived,
+      },
+      externalCourt: {
+        registered: getLitigationReportQuery.data.externalCourt.registered,
+        archived: getLitigationReportQuery.data.externalCourt.archived,
+        error: getLitigationReportQuery.data.externalCourt.error,
+        judicial: getLitigationReportQuery.data.externalCourt.judicial,
+      },
+      communication: {
+        active: getLitigationReportQuery.data.communication.active,
+        inactive: getLitigationReportQuery.data.communication.inactive,
+      },
+      monitoring: {
+        publications: getLitigationReportQuery.data.monitoring.publications,
+        progress: getLitigationReportQuery.data.monitoring.progress,
+      },
+    }
+    setReport(newReport)
+  }, [getLitigationReportQuery.data])
+
   return (
     <div className="grid gap-4 md:grid-cols-4">
-      <BaseStatsCard 
+      <BaseStatsCard
         title="Total de Processos"
-        total={3497}
+        total={report.status.active + report.status.archived}
         stats={[
-          { label: "Ativos", value: 2500, type: "success" },
-          { label: "Baixados", value: 997, type: "error" },
+          { label: "Ativos", value: report.status?.active , type: "success" },
+          { label: "Baixados", value: report.status?.archived , type: "error" },
         ]}
       />
-      <BaseStatsCard 
+      <BaseStatsCard
         title="Status Tribunal"
-        total={6994}
+        total={Object.values(report.externalCourt).reduce((acc, curr) => acc + curr, 0)}
         stats={[
-          { label: "Cadastrado", value: 2500, type: "success" },
-          { label: "S. Justiça", value: 2500, type: "info" },
-          { label: "Arquivado/Baixado", value: 1500, type: "warning" },
-          { label: "Erro", value: 494, type: "error" },
+          { label: "Cadastrado", value: report.externalCourt?.registered , type: "success" },
+          { label: "S. Justiça", value: report.externalCourt?.judicial , type: "info" },
+          { label: "Arquivado/Baixado", value: report.externalCourt?.archived , type: "warning" },
+          { label: "Erro", value: report.externalCourt?.error , type: "error" },
         ]}
       />
-      <BaseStatsCard 
+      <BaseStatsCard
         title="Em Comunicação"
+        total={report.communication.active + report.communication.inactive}
         stats={[
-          { label: "Habilitados", value: 4500, type: "success" },
-          { label: "Desabilitados", value: 2494, type: "error" },
+          { label: "Habilitados", value: report.communication?.active , type: "success" },
+          { label: "Desabilitados", value: report.communication?.inactive , type: "error" },
         ]}
       />
-      <BaseStatsCard 
+      <BaseStatsCard
         title="Em Monitoramento"
-        total={6994}
+        total={report.monitoring.progress + report.monitoring.publications}
         stats={[
-          { label: "Andamentos", value: 4000, type: "success" },
-          { label: "Publicações", value: 2994, type: "info" },
+          { label: "Andamentos", value: report.monitoring?.progress , type: "success" },
+          { label: "Publicações", value: report.monitoring?.publications , type: "info" },
         ]}
       />
     </div>
