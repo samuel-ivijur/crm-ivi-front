@@ -154,7 +154,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
           extraSubject: formData?.extraSubject || '',
           idCourt: formData?.court ? +formData.court : undefined,
           idCourtSystem: formData?.courtSystem ? +formData.courtSystem : undefined,
-          claimValue: formData?.causeValue ? String((Math.ceil(+(formData.causeValue).replace(/\D/g,''))/100).toFixed(2)) : undefined,
+          claimValue: formData?.causeValue ? String((Math.ceil(+(formData.causeValue).replace(/\D/g, '')) / 100).toFixed(2)) : undefined,
           classes: formData?.classes || [],
           idCounty: formData?.county ? +formData.county : undefined,
         }
@@ -274,13 +274,13 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="alternative">Nº Alternativo</Label>
-                    <CustomMaskedInput 
-                      id="alternative" 
-                      name="alternative" 
-                      value={formData.alternative || ''} 
+                    <CustomMaskedInput
+                      placeholder="_______-__.____._.__.____"
+                      value={formData.alternative || ''}
                       onChangeValue={(value: string) => setFormData(prev => ({ ...prev, alternative: value }))}
-                      className="w-full" disabled={!isEditing}
-                      mask="1111111-11.1111.1.11.1111" 
+                      mask="1111111-11.1111.1.11.1111"
+                      className="w-full"
+                      disabled={!isEditing}
                     />
                   </div>
 
