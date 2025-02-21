@@ -12,3 +12,8 @@ services:
       - NODE_ENV=production
       - PORT=5000
     restart: always
+    volumes:
+      - crm-ivi-front-data:/app
+
+volumes:
+  crm-ivi-front-data:
