@@ -114,7 +114,7 @@ function SidebarContent() {
                             : "text-white/80 hover:bg-white/10 hover:text-white"
                         )}
                       >
-                        <subitem.icon className="h-5 w-5" />
+                        {/* <subitem.icon className="h-5 w-5" /> */}
                         <span>{subitem.title}</span>
                       </Link>
                     ))}

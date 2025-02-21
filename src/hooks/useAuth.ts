@@ -47,10 +47,10 @@ export function useAuth() {
 
   const getSelectedOrganization = (): string => {
     const { selectedOrganization } = authService.getCurrentUser()
-    if (!selectedOrganization) {
-      throw new Error('Organization not selected')
-    }
-    return selectedOrganization
+    // if (!selectedOrganization) {
+    //   throw new Error('Organization not selected')
+    // }
+    return selectedOrganization || ""
   }
 
   return {

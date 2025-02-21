@@ -12,7 +12,7 @@ export function ProcessFooter({ data }: ProcessFooterProps) {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
           <div>
             <div className="font-medium text-gray-500">Data de Cadastro</div>
-            <div>{data?.createdat ? dayjs(data.createdat).format('DD/MM/YYYY HH:mm') : '-'}</div>
+            <div>{data?.createdAt ? dayjs(data.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</div>
           </div>
           <div>
             <div className="font-medium text-gray-500">Cadastrado por</div>

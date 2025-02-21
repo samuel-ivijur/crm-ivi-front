@@ -21,9 +21,21 @@ export const authCookies = {
     const token = Cookies.get(AUTH_COOKIE_NAME)
     const userData = Cookies.get(USER_COOKIE_NAME)
     const selectedOrganization = Cookies.get(SELECTED_ORGANIZATION_COOKIE_NAME)
+    let user: User = {
+      id: "-1",
+      email: "",
+      name: "",
+      organizations: [],
+      permissions: { id: -1, value: "" }
+    }
+
+    try{
+      user = JSON.parse(String(userData || {}))
+    } catch(e){}
+
     return {
       token: String(token),
-      user: JSON.parse(String(userData)),
+      user,
       selectedOrganization
     }
   },

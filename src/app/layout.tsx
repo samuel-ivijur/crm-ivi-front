@@ -20,8 +20,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-        <body className={inter.className}>
-          <ReactQueryProvider>
+      <body className={inter.className}>
+        <ReactQueryProvider>
           <SidebarProvider>
             <div className="min-h-screen bg-gray-50">
               <Sidebar />
@@ -31,8 +31,8 @@ export default function RootLayout({
               </MainContent>
             </div>
           </SidebarProvider>
-          </ReactQueryProvider>
-        </body>
+        </ReactQueryProvider>
+      </body>
     </html>
   )
 } 

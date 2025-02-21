@@ -18,8 +18,7 @@ export const authService = {
       throw new Error(data.message || 'Erro ao fazer login')
     }
 
-    const { token } = data.data
-    const user = { ...data.data, token: undefined }
+    const { token, ...user } = data.data
     authCookies.setAuthData({ token, user })
 
     return data

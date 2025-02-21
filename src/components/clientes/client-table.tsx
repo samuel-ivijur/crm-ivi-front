@@ -232,11 +232,11 @@ export function ClientTable({
         communicate: checked
       })
       if (!beneficiaryLitigations[idBeneficiary]) return
-      const indexData = beneficiaryLitigations[idBeneficiary].findIndex(d => d.id === idLitigation)
+      const indexData = beneficiaryLitigations[idBeneficiary]?.findIndex(d => d.id === idLitigation)
+      const newBeneficiaryLitigations = beneficiaryLitigations[idBeneficiary]
 
-      if (indexData !== undefined && indexData !== -1) {
-        const newBeneficiaryLitigations = beneficiaryLitigations[idBeneficiary]
-        newBeneficiaryLitigations[indexData].beneficiaries[0].communicate = checked
+      if (indexData !== undefined && indexData !== -1 && newBeneficiaryLitigations) {
+        newBeneficiaryLitigations[indexData]!.beneficiaries[0].communicate = checked
 
         setBeneficiaryLitigations(prev => ({
           ...prev,
