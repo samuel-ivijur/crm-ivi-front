@@ -40,6 +40,7 @@ import { TaskService } from "@/services/api/tasks"
 import { Skeleton } from "../ui/skeleton"
 import PopConfirm from "../popconfirm"
 import CustomMaskedInput from "../masked-input"
+import { InputMask } from "@react-input/mask"
 
 interface Deadline {
   id: number
@@ -59,7 +60,7 @@ interface DeadlinesTabProps {
 export function DeadlinesTab({ data, isLoading, invalidateLitigation }: DeadlinesTabProps) {
   const [deadlines, setDeadlines] = useState<Deadline[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>()
-  const [selectedTime, setSelectedTime] = useState("0800")
+  const [selectedTime, setSelectedTime] = useState("")
   const [name, setName] = useState("")
   const [responsible, setResponsible] = useState("")
   const [idPriority, setIdPriority] = useState(TaskPriorities.WithoutPriority)
@@ -79,8 +80,9 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
       }
 
       const newDate = new Date(selectedDate)
+
       const hours = selectedTime.slice(0, 2)
-      const minutes = selectedTime.slice(2, 4)
+      const minutes = selectedTime.slice(3, 5)
       newDate.setHours(parseInt(hours), parseInt(minutes))
 
       await TaskService.save({
@@ -93,7 +95,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
       })
       invalidateLitigation(data.id)
       setSelectedDate(undefined)
-      setSelectedTime("08:00")
+      setSelectedTime("")
     } catch (error) {
       console.log(error)
       toast({
@@ -105,7 +107,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
   }
 
   const updateDeadlineStatus = async (id: number, status: number) => {
-    try{
+    try {
       if (!data) throw new Error()
       await TaskService.changeStatus({
         idOrganization: data.organization.id,
@@ -124,7 +126,7 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
   }
 
   const removeDeadline = async (id: number) => {
-    try{
+    try {
       if (!data) throw new Error()
       await TaskService.delete({
         id,
@@ -202,32 +204,23 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
 
               <div className="relative w-[90px]">
                 <CustomMaskedInput
+                  mask="__:__"
                   value={selectedTime}
-                  mask="11:11"
                   onChangeValue={(value: string) => {
-                    value = value.replace(/\D/g, '')
-                    if (value.length > 4) value = value.slice(0, 4)
-                    const hours = value.slice(0, 2)
-                    let minutes = value.slice(2, 4)
-                    if (parseInt(hours) > 23) {
-                      minutes = minutes || '59'
-                      value = '23' + minutes
-                    }
-                    if (parseInt(minutes) > 59) value = hours + '59'
-
-                    setSelectedTime(`${value.slice(0, 2)}${value.slice(2, 4)}`)
+                    setSelectedTime(value)
                   }}
                   onBlur={() => {
-                    if (parseInt(selectedTime.slice(0, 2)) > 23) {
-                      return setSelectedTime('23:59')
-                    }
-                    const hours = selectedTime.slice(0, 2).padStart(2, '0')
-                    const minutes = selectedTime.slice(2, 4).padStart(2, '0')
-                    setSelectedTime(`${hours}${minutes}`)
+                    const value = selectedTime.replace(/\D/g, '')
+                    if (parseInt(value.slice(0, 2)) > 23) return setSelectedTime('23:59')
+                    const hours = value.slice(0, 2).padStart(2, '0')
+                    let minutes = value.slice(2, 4).padStart(2, '0')
+                    minutes = +minutes > 59 ? '59' : minutes
+                    setSelectedTime(`${hours}:${minutes}`)
                   }}
                   className="pl-8"
                   placeholder="00:00"
                 />
+
                 <Clock className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
               </div>
             </div>
@@ -246,8 +239,8 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
 
           <div className="space-y-2 w-[180px]">
             <Label htmlFor="priority">Prioridade</Label>
-            <Select name="priority" defaultValue="normal" 
-              value={String(idPriority)} 
+            <Select name="priority" defaultValue="normal"
+              value={String(idPriority)}
               onValueChange={(value) => setIdPriority(parseInt(value))}
             >
               <SelectTrigger>

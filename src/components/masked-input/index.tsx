@@ -14,10 +14,11 @@ interface InputMaskProps {
   readOnly?: boolean;
   required?: boolean;
   onBlur?: () => void;
+  defaultValue?: string;
 }
 
 const InputMaskComponent = React.forwardRef<HTMLInputElement, InputMaskProps>(
-  ({ className, mask, onChangeValue, value, placeholder, onBlur, ...props }, ref) => {
+  ({ className, mask, onChangeValue, value, placeholder, onBlur, defaultValue, ...props }, ref) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onChangeValue(e.target.value);
@@ -30,6 +31,7 @@ const InputMaskComponent = React.forwardRef<HTMLInputElement, InputMaskProps>(
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
+        defaultValue={defaultValue}
         replacement={{ _: /\d/ }}
         onBlur={onBlur}
         showMask
