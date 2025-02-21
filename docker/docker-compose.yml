@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    container_name: crm-ivi-front
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+    restart: always
