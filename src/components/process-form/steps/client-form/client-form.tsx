@@ -1,4 +1,3 @@
-import { FormData } from "@/components/clientes/client-form/types"
 import { DebounceCombobox } from "@/components/debounce-combo-box"
 import CustomMaskedInput from "@/components/masked-input"
 import PopConfirm from "@/components/popconfirm"
@@ -41,7 +40,7 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
     })
     const [isLoadingCep, setIsLoadingCep] = useState(false)
 
-    const handleFetchBeneficiary = async (value: string): Promise<void> => {
+    const handleFetchBeneficiary = async (value: string, selectedBeneficiary: { value: string, label: string } | null): Promise<void> => {
         const idOrganization = getSelectedOrganization()
         const response = await beneficiariesService.findAll({
             idOrganization,
@@ -104,7 +103,12 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
     }
 
     useEffect(() => {
-        handleFetchBeneficiary('')
+        let selectedBeneficiary = formData.idClient ? { value: formData.idClient, label: `${formData.beneficiary?.name} - ${formData.beneficiary?.phone}` } : null
+        selectedBeneficiary && setSelectedBeneficiary(selectedBeneficiary)
+
+        setTimeout(() => {
+            handleFetchBeneficiary('', selectedBeneficiary)
+        }, 100)
     }, [])
 
     return (
@@ -149,7 +153,7 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                     </Label>
                                     <DebounceCombobox
                                         id="idClient"
-                                        fetchOptions={handleFetchBeneficiary}
+                                        fetchOptions={(value: string) => handleFetchBeneficiary(value, selectedBeneficiary)}
                                         options={beneficiaryOptions}
                                         className={cn(
                                             "w-full",
@@ -171,7 +175,7 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                         </Label>
                                         <Select
                                             name="qualification"
-                                            value={formData.idQualification ? formData.idQualification.toString() : ''}
+                                            value={formData.idQualification ? formData.idQualification.toString() : undefined}
                                             onValueChange={(value) => updateBeneficiaries(index, "idQualification", Number(value))}
                                             required
                                         >

@@ -164,8 +164,8 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
         selectClient: true,
         idClient: beneficiary.id,
         beneficiary: {
-          name: '',
-          phone: '',
+          name: beneficiary.name,
+          phone: beneficiary.phone,
           email: '',
           birthDate: '',
           document: '',
@@ -176,7 +176,7 @@ export function ClientTab({ data, isLoading, invalidateLitigation }: ClientTabPr
             neighborhood: '',
           },
         },
-        idQualification: beneficiary.qualification.id,
+        idQualification: beneficiary.qualification?.id,
         nick: beneficiary.nick
       })))
     }
