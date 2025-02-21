@@ -204,8 +204,8 @@ export function DeadlinesTab({ data, isLoading, invalidateLitigation }: Deadline
                 <CustomMaskedInput
                   value={selectedTime}
                   mask="11:11"
-                  onChange={(e) => {
-                    let value = e.target.value.replace(/\D/g, '')
+                  onChangeValue={(value: string) => {
+                    value = value.replace(/\D/g, '')
                     if (value.length > 4) value = value.slice(0, 4)
                     const hours = value.slice(0, 2)
                     let minutes = value.slice(2, 4)

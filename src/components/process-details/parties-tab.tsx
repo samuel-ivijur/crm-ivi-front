@@ -240,10 +240,8 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
                         id={`document-${party.id}-${PersonType.PERSON}`}
                         key={`document-${party.id}-${PersonType.PERSON}`}
                         mask="111.111.111-11"
-                        placeholder="___.___.___-__"
                         value={party.document || ''}
-                        onChange={(e) => updateParty(party.id, 'document', e.target.value)}
-                        placeholderChar="_"
+                        onChangeValue={(value: string) => updateParty(party.id, 'document', value)}
                         disabled={!party.personType}
                       />
                     </>
@@ -256,10 +254,8 @@ export function PartiesTab({ data, isLoading: isLoadingLitigation, invalidateLit
                         id={`document-${party.id}-${PersonType.COMPANY}`}
                         key={`document-${party.id}-${PersonType.COMPANY}`}
                         mask="11.111.111/1111-11"
-                        placeholder="__.___.___/____-__"
                         value={party.document || ''}
-                        onChange={(e) => updateParty(party.id, 'document', e.target.value)}
-                        placeholderChar="_"
+                        onChangeValue={(value: string) => updateParty(party.id, 'document', value)}
                         disabled={!party.personType}
                       />
                     </>

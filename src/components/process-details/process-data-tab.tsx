@@ -30,6 +30,7 @@ import { useCounty } from "@/hooks/useCounty"
 import { toast } from "@/hooks/use-toast"
 import { instanciaOptions } from "@/lib/constants/instancia-types"
 import { areaOptions } from "@/lib/constants/area-types"
+import CustomMaskedInput from "../masked-input"
 
 type FormData = {
   isActive: boolean | null;
@@ -273,7 +274,14 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
 
                   <div className="space-y-2">
                     <Label htmlFor="alternative">Nº Alternativo</Label>
-                    <Input id="alternative" name="alternative" value={formData.alternative || ''} onChange={handleInputChange} className="w-full" disabled={!isEditing} />
+                    <CustomMaskedInput 
+                      id="alternative" 
+                      name="alternative" 
+                      value={formData.alternative || ''} 
+                      onChangeValue={(value: string) => setFormData(prev => ({ ...prev, alternative: value }))}
+                      className="w-full" disabled={!isEditing}
+                      mask="1111111-11.1111.1.11.1111" 
+                    />
                   </div>
 
                   <div className="space-y-2">

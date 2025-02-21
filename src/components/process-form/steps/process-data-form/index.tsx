@@ -124,7 +124,7 @@ export function ProcessDataForm({ formData, setFormData, errors }: ProcessDataFo
               <CustomMaskedInput
                 id="cnj"
                 value={formData?.processNumber}
-                onChange={(e) => setFormData('processNumber', e.target.value)}
+                onChangeValue={(value: string) => setFormData('processNumber', value)}
                 mask="1111111-11.1111.1.11.1111"
                 className={cn(
                   "transition-colors",
@@ -183,8 +183,8 @@ export function ProcessDataForm({ formData, setFormData, errors }: ProcessDataFo
             <Label htmlFor="alternative">Nº Alternativo</Label>
             <CustomMaskedInput
               id="alternative"
-              value={formData?.caseCover?.alternativeNumber}
-              onChange={(e) => setFormData('caseCover', { ...formData.caseCover, alternativeNumber: e.target.value })}
+              value={formData?.caseCover?.alternativeNumber || ''}
+              onChangeValue={(value: string) => setFormData('caseCover', { ...formData.caseCover, alternativeNumber: value })}
               mask="1111111-11.1111.1.11.1111"
             />
           </div>

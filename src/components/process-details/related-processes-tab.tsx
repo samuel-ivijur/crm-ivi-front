@@ -149,10 +149,9 @@ return (
           <CustomMaskedInput
             id="number"
             name="number"
-            placeholder="_______-__.____._.__.____"
             mask="1111111-11.1111.1.11.1111"
             value={number}
-            onChange={(e) => setNumber(e.target.value)}
+            onChangeValue={(value: string) => setNumber(value)}
             required
           />
         </div>

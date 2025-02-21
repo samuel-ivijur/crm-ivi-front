@@ -240,8 +240,8 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                         </Label>
                                         <CustomMaskedInput
                                             id="phone"
-                                            value={formData.beneficiary?.phone}
-                                            onChange={(e) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, phone: e.target.value })}
+                                            value={formData.beneficiary?.phone || ''}
+                                            onChangeValue={(value: string) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, phone: value })}
                                             placeholder="(00) 00000-0000"
                                             className={cn(
                                                 "transition-colors focus:border-[#0146cf]",
@@ -286,9 +286,8 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                                     key={`document-${PersonType.COMPANY}`}
                                                     mask="11.111.111/1111-11"
                                                     value={formData.beneficiary?.document || ''}
-                                                    onChange={(e) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, document: String(e.target.value).replace(/\D/g, '') })}
+                                                    onChangeValue={(value: string) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, document: String(value).replace(/\D/g, '') })}
                                                     className="transition-colors focus:border-[#0146cf]"
-                                                    placeholderChar="_"
                                                     disabled={formData.beneficiary?.idType !== PersonType.COMPANY}
                                                 />
                                             </>
@@ -302,9 +301,8 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                                     key={`document-${PersonType.PERSON}`}
                                                     mask="111.111.111-11"
                                                     value={formData.beneficiary?.document || ''}
-                                                    onChange={(e) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, document: String(e.target.value).replace(/\D/g, '') })}
+                                                    onChangeValue={(value: string) => updateBeneficiaries(index, "beneficiary", { ...formData.beneficiary, document: String(value).replace(/\D/g, '') })}
                                                     className="transition-colors focus:border-[#0146cf]"
-                                                    placeholderChar="_"
                                                     disabled={formData.beneficiary?.idType !== PersonType.PERSON}
                                                 />
                                             </>
@@ -394,7 +392,7 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
                                                 <CustomMaskedInput
                                                     id="cep"
                                                     value={cep}
-                                                    onChange={(e) => setCep(e.target.value)}
+                                                    onChangeValue={(value: string) => setCep(value)}
                                                     placeholder="00000-000"
                                                     className="pr-8 transition-colors focus:border-[#0146cf]"
                                                     mask="11111-111"

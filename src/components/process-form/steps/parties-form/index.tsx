@@ -149,17 +149,17 @@ export function PartiesForm() {
                 <CustomMaskedInput
                   id={`document-${index}`}
                   placeholder="00.000.000/0000-00"
-                  onChange={(e) => handleDocumentChange(index, e.target.value)}
-                  value={party.document}
+                  onChangeValue={(value: string) => handleDocumentChange(index, value)}
+                  value={party.document || ''}
                   mask="11.111.111/1111-11"
                 />
                 :
                 <CustomMaskedInput
                   id={`document-${index}`}
                   placeholder="000.000.000-00"
-                  value={party.document}
+                  value={party.document || ''}
                   mask="111.111.111-11"
-                  onChange={(e) => handleDocumentChange(index, e.target.value)}
+                  onChangeValue={(value: string) => handleDocumentChange(index, value)}
                 />
               }
             </div>

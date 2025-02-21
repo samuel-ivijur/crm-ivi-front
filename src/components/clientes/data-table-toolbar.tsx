@@ -156,7 +156,7 @@ export function BeneficiaryDataTableToolbar({
                 <CustomMaskedInput
                   placeholder="(__) _____-____"
                   value={values.phone ?? ""}
-                  onChange={(event) => debounceFilter("phone", event.target.value)}
+                  onChangeValue={(value: string) => debounceFilter("phone", value)}
                   mask="(11) 11111-1111"
                 />
               </div>

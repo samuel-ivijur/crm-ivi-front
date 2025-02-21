@@ -129,9 +129,8 @@ export function ClientDataForm({ formData, setFormData, phoneRequired, errors }:
                 key={`document-${PersonType.COMPANY}`}
                 mask="11.111.111/1111-11"
                 value={formData.document || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, document: String(e.target.value).replace(/\D/g, '') }))}
+                onChangeValue={(value: string) => setFormData(prev => ({ ...prev, document: String(value).replace(/\D/g, '') }))}
                 className="transition-colors focus:border-[#0146cf]"
-                placeholderChar="_"
                 disabled={formData.type !== PersonType.COMPANY}
               />
             </>
@@ -145,9 +144,8 @@ export function ClientDataForm({ formData, setFormData, phoneRequired, errors }:
                 key={`document-${PersonType.PERSON}`}
                 mask="111.111.111-11"
                 value={formData.document || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, document: String(e.target.value).replace(/\D/g, '') }))}
+                onChangeValue={(value: string) => setFormData(prev => ({ ...prev, document: String(value).replace(/\D/g, '') }))}
                 className="transition-colors focus:border-[#0146cf]"
-                placeholderChar="_"
                 disabled={formData.type !== PersonType.PERSON}
               />
             </>
@@ -173,8 +171,8 @@ export function ClientDataForm({ formData, setFormData, phoneRequired, errors }:
           </Label>
           <CustomMaskedInput
             id="phone"
-            value={formData.phone}
-            onChange={(e) => setFormData(prev => ({ ...prev, phone: String(e.target.value).replace(/\D/g, '') }))}
+            value={formData.phone || ''}
+            onChangeValue={(value: string) => setFormData(prev => ({ ...prev, phone: String(value).replace(/\D/g, '') }))}
             className="transition-colors focus:border-[#0146cf]"
             required={phoneRequired}
             mask="(11) 11111-1111"

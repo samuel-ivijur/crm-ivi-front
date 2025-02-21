@@ -239,7 +239,7 @@ export function ClientProcessForm({
             <CustomMaskedInput
               placeholder="_______-__.____._.__.____"
               value={litigationSearch.processNumber}
-              onChange={(e) => setLitigationSearch({ ...litigationSearch, processNumber: e.target.value })}
+              onChangeValue={(value: string) => setLitigationSearch({ ...litigationSearch, processNumber: value })}
               mask="1111111-11.1111.1.11.1111"
               className={cn(
                 "transition-colors",
