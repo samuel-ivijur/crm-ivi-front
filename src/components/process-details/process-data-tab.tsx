@@ -202,6 +202,21 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
     }
   }, [getCountiesQuery.data])
 
+  useEffect(() => {
+    console.log("courtSystem", formData.courtSystem, "court", formData.court)
+    let idCourtSystem = formData.courtSystem
+    let idCourt = formData.court
+    if (formData.courtSystem && isNaN(+formData.courtSystem)){
+      const courtSystem = courtSystems.find(courtSystem => String(courtSystem.name).toLowerCase() === String(formData.courtSystem).toLowerCase())
+      idCourtSystem = courtSystem ? courtSystem.id.toString() : idCourtSystem
+    }
+    if (formData.court && isNaN(+formData.court)){
+      const court = getCourtsQuery.data?.courts.find(court => String(court.name).toLowerCase() === String(formData.court).toLowerCase())
+      idCourt = court ? court.id.toString() : idCourt
+    }
+    if (idCourtSystem !== formData.courtSystem || idCourt !== formData.court) setFormData(prev => ({ ...prev, courtSystem: idCourtSystem, court: idCourt }))
+  }, [formData.courtSystem, formData.court])
+
   return (
     <Card>
       <CardHeader>
@@ -362,7 +377,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                     <Combobox
                       id="court"
                       options={(getCourtsQuery.data?.courts || []).map((court) => ({ value: court.id.toString(), label: court.name }))}
-                      value={(getCourtsQuery.data?.courts || []).find(court => String(court.name).toLowerCase() === String(formData.court).toLowerCase())?.id.toString() || ''}
+                      value={(getCourtsQuery.data?.courts || []).find(court => String(court.name).toLowerCase() === String(formData.court).toLowerCase())?.id.toString() || formData.court || ''}
                       setValue={handleSelectChange("court")}
                       className="w-full"
                       disabled={!isEditing}
@@ -377,7 +392,7 @@ export function ProcessDataTab({ data, isLoading, invalidateLitigation }: Proces
                     <Combobox
                       id="court-system"
                       options={courtSystems.map((courtSystem) => ({ value: courtSystem.id.toString(), label: courtSystem.name }))}
-                      value={courtSystems.find(courtSystem => String(courtSystem.name).toLowerCase() === String(formData.courtSystem).toLowerCase())?.id.toString() || ''}
+                      value={formData.courtSystem || ""}
                       setValue={handleSelectChange("courtSystem")}
                       className="w-full"
                       disabled={!isEditing}
