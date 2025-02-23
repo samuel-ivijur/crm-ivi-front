@@ -18,7 +18,7 @@ export function useProcessDetails() {
     { id: "prazos", label: "Prazos" },
     { id: "relacionados", label: "Relacionados" },
     { id: "historico", label: "Histórico" },
-    { id: "cliente", label: "Cliente" },
+    { id: "cliente", label: "Clientes" },
   ]
 
   const getLitigationQuery = useQuery({
