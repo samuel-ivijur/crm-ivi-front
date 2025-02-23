@@ -103,7 +103,7 @@ export const ClientForm = ({ index, formData, updateBeneficiary: updateBeneficia
     }
 
     useEffect(() => {
-        let selectedBeneficiary = formData.idClient ? { value: formData.idClient, label: `${formData.beneficiary?.name} - ${formData.beneficiary?.phone}` } : null
+        let selectedBeneficiary = formData.idClient ? { value: formData.idClient, label: `${formData.beneficiary?.name}${formData.beneficiary?.phone ? ` - ${formData.beneficiary?.phone}` : ''}` } : null
         selectedBeneficiary && setSelectedBeneficiary(selectedBeneficiary)
 
         setTimeout(() => {
