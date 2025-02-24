@@ -12,12 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import * as XLSX from 'xlsx'
 import { GetLitigations, litigationsService } from "@/services/api/litigations"
-import { useLitigation } from "@/hooks/useLitigations"
+import { GetLitigationParams, useLitigation } from "@/hooks/useLitigations"
 import { ValueOf } from "next/dist/shared/lib/constants"
 import { LitigationMonitoringType, LitigationStatus, LitigationStatusLabels } from "@/constants/litigation"
 import PopConfirm from "@/components/popconfirm"
 import { useAuth } from "@/hooks/useAuth"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
 interface LitigationDataTableToolbarProps {
   table: Table<GetLitigations.LitigationInfo>
@@ -35,8 +35,8 @@ export function LitigationDataTableToolbar({
   isExporting,
   total
 }: LitigationDataTableToolbarProps) {
-  const isFiltered = table.getState().columnFilters.length > 0
   const { filter, changeFilter } = useLitigation()
+  const [values, setValues] = useState<GetLitigationParams>(filter)
   const { getSelectedOrganization } = useAuth()
   const debounceTime = 500
   const idOrganization = getSelectedOrganization()
@@ -49,13 +49,16 @@ export function LitigationDataTableToolbar({
 
   const [monitoringValue, setMonitoringValue] = useState<string | null>(getSelectMonitoringValue())
 
-  let debounceTimeout: NodeJS.Timeout | null = null
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
   const debounceFilter = async (key: keyof typeof filter, value: any): Promise<void> => {
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout)
+    setValues(prev => ({ ...prev, [key]: value }))
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current)
     }
-    debounceTimeout = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
+    debounceTimeout.current = setTimeout(() => changeFilter({ [key]: value }), debounceTime)
   }
+
+  
 
   const handleExport = async () => {
     const response = await litigationsService.getLitigations({
@@ -107,9 +110,9 @@ export function LitigationDataTableToolbar({
             <Button variant="outline" className="gap-2">
               <Filter className="h-4 w-4" />
               Filtros
-              {isFiltered && (
+              {(
                 <div className="rounded-full bg-primary/10 px-1 text-xs">
-                  {table.getState().columnFilters.length}
+                  {Object.keys(filter).filter(key => !["idOrganization", "page", "limit"].includes(key)).length}
                 </div>
               )}
             </Button>
@@ -120,7 +123,7 @@ export function LitigationDataTableToolbar({
                 <Label>Número do Processo</Label>
                 <Input
                   placeholder="Digite o número..."
-                  value={filter?.litigation ?? ""}
+                  value={values?.litigation ?? ""}
                   onChange={(event) => debounceFilter("litigation", event.target.value)}
                 />
               </div>
@@ -128,14 +131,14 @@ export function LitigationDataTableToolbar({
                 <Label>Cliente</Label>
                 <Input
                   placeholder="Nome do cliente..."
-                  value={filter?.beneficiary ?? ""}
+                  value={values?.beneficiary ?? ""}
                   onChange={(event) => debounceFilter("beneficiary", event.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={filter.idStatusLitigation?.toString() ?? "null"}
+                  value={values?.idStatusLitigation?.toString() ?? "null"}
                   onValueChange={(value) => handleSelectChange("idStatusLitigation", value)}
                 >
                   <SelectTrigger>
@@ -164,7 +167,7 @@ export function LitigationDataTableToolbar({
                   </SelectContent>
                 </Select>
               </div>
-              {isFiltered && (
+              {Object.keys(filter).filter(key => !["idOrganization", "page", "limit"].includes(key)).length > 0 && (
                 <Button
                   variant="ghost"
                   onClick={() => table.resetColumnFilters()}

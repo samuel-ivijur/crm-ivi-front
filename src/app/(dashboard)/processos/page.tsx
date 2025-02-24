@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/useAuth"
 import { UF } from "@/constants"
 import { litigationsService, SaveLitigationBulk } from "@/services/api/litigations"
 import { useLitigation } from "@/hooks/useLitigations"
-import { useLitigationReport } from "@/hooks/use-litigation-report"
 
 const qualifications: { [k: string]: number } = {
   recorrido: 1,
@@ -27,7 +26,6 @@ export default function ProcessosPage() {
   const [isModalRegisterOpen, setIsModalRegisterOpen] = useState(false)
   const [isModalImportOpen, setIsModalImportOpen] = useState(false)
   const { getAllLitigationsQuery, filter, changeFilter } = useLitigation()
-  const { getLitigationReportQuery } = useLitigationReport()
 
   const handleFinishImport = async (
     rows: Array<{ [k: string]: string }>,
