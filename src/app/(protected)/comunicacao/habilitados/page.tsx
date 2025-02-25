@@ -5,6 +5,7 @@ import { Download, Plus } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { HabilitadosStats } from "@/components/comunicacao/habilitados/habilitados-stats"
 import { HabilitadosTable } from "@/components/comunicacao/habilitados/habilitados-table"
+import { EnabledDataTableToolbar } from "@/components/comunicacao/habilitados/data-table-toolbar"
 
 export default function HabilitadosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -28,7 +29,19 @@ export default function HabilitadosPage() {
         </div>
       </div>
       <HabilitadosStats />
-      <HabilitadosTable />
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-4">
+          <EnabledDataTableToolbar
+            isExporting={false}
+            selectedRows={new Set()}
+            setSelectedRows={() => {}}
+            total={0}
+          />
+        </div>
+        <div className="p-4">
+          <HabilitadosTable />
+        </div>
+      </div>
     </div>
   )
 } 

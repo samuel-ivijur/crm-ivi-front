@@ -84,7 +84,7 @@ export default function ProcessosPage() {
         data={{
           total: getAllLitigationsQuery.data?.total || 0,
           data: getAllLitigationsQuery.data?.data || [],
-          isLoading: getAllLitigationsQuery.isLoading,
+          isLoading: getAllLitigationsQuery.isLoading || getAllLitigationsQuery.isFetching,
         }}
         filter={filter}
         changeFilter={changeFilter}

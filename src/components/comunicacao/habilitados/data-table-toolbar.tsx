@@ -19,8 +19,7 @@ import PopConfirm from "@/components/popconfirm"
 import { useAuth } from "@/hooks/useAuth"
 import { useRef, useState } from "react"
 
-interface LitigationDataTableToolbarProps {
-  table: Table<GetLitigations.LitigationInfo>
+interface EnabledDataTableToolbarProps {
   selectedRows: Set<string>
   setSelectedRows: (rows: Set<string>) => void
   isExporting: boolean
@@ -28,13 +27,12 @@ interface LitigationDataTableToolbarProps {
 }
 
 
-export function LitigationDataTableToolbar({
-  table,
+export function EnabledDataTableToolbar({
   selectedRows,
   setSelectedRows,
   isExporting,
   total
-}: LitigationDataTableToolbarProps) {
+}: EnabledDataTableToolbarProps) {
   const { filter, changeFilter, resetParams } = useLitigation()
   const [values, setValues] = useState<GetLitigationParams>(filter)
   const { getSelectedOrganization } = useAuth()

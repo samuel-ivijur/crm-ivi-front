@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
+import Pagination from "@/components/pagination"
 
 interface Habilitado {
   id: string
@@ -64,24 +65,27 @@ export function HabilitadosTable() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
   const totalItems = 10221
+  const filter = {
+    limit: 10,
+    page: 1
+  }
+  const total = 0
+  const changeBeneficiaryFilter = () => {}
+  const PagePagination = () => (
+    <Pagination
+      limit={filter.limit || 10}
+      page={filter.page || 1}
+      setLimit={(limit) => {}}
+      setPage={(page) => {}}
+      total={total}
+    />
+  )
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Lista de Habilitados</h2>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" />
-            Filtros
-          </Button>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              0 selecionado(s) | Total: {totalItems}
-            </span>
-          </div>
-        </div>
+       <div className="mb-4">
+        <PagePagination />
       </div>
-
       <TooltipProvider>
         <div className="rounded-md border">
           <Table>
@@ -174,35 +178,8 @@ export function HabilitadosTable() {
         </div>
       </TooltipProvider>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm">Limite:</span>
-          <Input
-            type="number"
-            value={itemsPerPage}
-            className="w-16 h-8"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">&lt;&lt;</Button>
-          <Button variant="outline" size="sm">Anterior</Button>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3].map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                className={currentPage === page ? "bg-[#0146cf]" : ""}
-              >
-                {page}
-              </Button>
-            ))}
-            <span>...</span>
-            <Button variant="outline" size="sm">512</Button>
-          </div>
-          <Button variant="outline" size="sm">Próxima</Button>
-          <Button variant="outline" size="sm">&gt;&gt;</Button>
-        </div>
+      <div className="mb-4">
+        <PagePagination />
       </div>
     </div>
   )

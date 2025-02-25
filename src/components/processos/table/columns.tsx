@@ -149,43 +149,7 @@ export const litigationTableColumns = ({
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <PopConfirm
-                  disabled={!isActive || performingActions !== null}
-                  title={isMonitoring ? "Desativar monitoramento" : "Ativar monitoramento"}
-                  description={isMonitoring
-                    ? "Tem certeza que deseja desativar o monitoramento? Isso irá parar o envio de notificações do processo para todos os clientes vinculados."
-                    : "Tem certeza que deseja ativar o monitoramento? Isso irá iniciar o envio de notificações para o processo."}
-                  onConfirm={async () => {
-                    try{
-                      setPerformingActions({ id: idLitigation, action: 'changeMonitoring' })
-                      await changeMonitoring(idLitigation, !isMonitoring)
-                    } catch (error) {
-                      toast({
-                        title: "Erro ao alterar monitoramento",
-                        description: "Ocorreu um erro ao alterar o monitoramento do processo. Por favor, tente novamente.",
-                        variant: "destructive"
-                      })
-                    } finally {
-                      setPerformingActions(null)
-                    }
-                  }}
-                >
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    disabled={!isActive}
-                    loading={performingActions?.action === 'changeMonitoring' && performingActions?.id === idLitigation}
-                  >
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                </PopConfirm>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{isMonitoring ? "Desativar" : "Ativar"} monitoramento</p>
-              </TooltipContent>
-            </Tooltip>
+           
             {
               row.original.status?.id === LitigationStatus.ARCHIVED ? (
                 <PopConfirm
@@ -227,6 +191,43 @@ export const litigationTableColumns = ({
               </PopConfirm>
               )
             }
+             <Tooltip>
+              <TooltipTrigger asChild>
+                <PopConfirm
+                  disabled={!isActive || performingActions !== null}
+                  title={isMonitoring ? "Desativar monitoramento" : "Ativar monitoramento"}
+                  description={isMonitoring
+                    ? "Tem certeza que deseja desativar o monitoramento? Isso irá parar o envio de notificações do processo para todos os clientes vinculados."
+                    : "Tem certeza que deseja ativar o monitoramento? Isso irá iniciar o envio de notificações para o processo."}
+                  onConfirm={async () => {
+                    try{
+                      setPerformingActions({ id: idLitigation, action: 'changeMonitoring' })
+                      await changeMonitoring(idLitigation, !isMonitoring)
+                    } catch (error) {
+                      toast({
+                        title: "Erro ao alterar monitoramento",
+                        description: "Ocorreu um erro ao alterar o monitoramento do processo. Por favor, tente novamente.",
+                        variant: "destructive"
+                      })
+                    } finally {
+                      setPerformingActions(null)
+                    }
+                  }}
+                >
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    disabled={!isActive}
+                    loading={performingActions?.action === 'changeMonitoring' && performingActions?.id === idLitigation}
+                  >
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </PopConfirm>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isMonitoring ? "Desativar" : "Ativar"} monitoramento</p>
+              </TooltipContent>
+            </Tooltip>
             <PopConfirm
               title="Deseja realmente remover o processo?"
               description="Isso irá remover o processo da lista de processos."
